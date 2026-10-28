@@ -19,6 +19,7 @@
   --btn:#1B211D; --on-btn:#F8F9F6;
   --band:#E9C232; --on-band:#1B211D;
   --rapid:#B3261E; --rapid-bg:#F7DFDB; --evac:#8F5400; --evac-bg:#F5E6CA; --field:#2D6843; --field-bg:#DBEADF;
+  --fig-body:#E8DED1; --fig-pad:#B9D4C2; --fig-heat:#E2761B; --fig-barrier:#9FC0DD; --fig-tarp:#8E9B90;
   --f-display:"Avenir Next Condensed","Roboto Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
   --f-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
@@ -27,11 +28,13 @@
   --bg:#101311; --surface:#191E1A; --ink:#E3E8E1; --muted:#9BA69D; --line:#2C342E;
   --btn:#E3E8E1; --on-btn:#101311;
   --rapid:#FF8B7F; --rapid-bg:#3B1713; --evac:#F1B45C; --evac-bg:#352611; --field:#80CB97; --field-bg:#15291C;
+  --fig-body:#3C433E; --fig-pad:#2E5A40; --fig-heat:#F09A4E; --fig-barrier:#3F6489; --fig-tarp:#5F6C62;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#101311; --surface:#191E1A; --ink:#E3E8E1; --muted:#9BA69D; --line:#2C342E;
   --btn:#E3E8E1; --on-btn:#101311;
   --rapid:#FF8B7F; --rapid-bg:#3B1713; --evac:#F1B45C; --evac-bg:#352611; --field:#80CB97; --field-bg:#15291C;
+  --fig-body:#3C433E; --fig-pad:#2E5A40; --fig-heat:#F09A4E; --fig-barrier:#3F6489; --fig-tarp:#5F6C62;
   color-scheme:dark}
 
 [hidden]{display:none!important}
@@ -124,6 +127,23 @@ main .gut{padding-block:20px 56px}
 .sec.av ul li::marker{color:var(--rapid)}
 .link{background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;font-weight:600}
 .rel{display:flex;flex-wrap:wrap;gap:6px}
+.fig{margin:16px 0 0;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px}
+.fig svg{width:100%;height:auto;display:block;max-width:460px;margin:0 auto}
+.fig h4{margin:0 0 6px;font:600 12px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fig ol{margin:10px 0 0;padding-left:1.6em;display:grid;gap:6px;font-size:15px}
+.fig ol li::marker{font:700 13px var(--f-mono)}
+.fig .b{fill:var(--fig-body);stroke:var(--ink);stroke-width:1.5}
+.fig .p{fill:var(--fig-pad);stroke:var(--ink);stroke-width:1.2}
+.fig .s{fill:var(--band);stroke:var(--ink);stroke-width:1.2}
+.fig .h{fill:var(--fig-heat);stroke:var(--ink);stroke-width:1}
+.fig .v{fill:var(--fig-barrier);stroke:var(--ink);stroke-width:1.2}
+.fig .t{fill:var(--fig-tarp);stroke:var(--ink);stroke-width:1.2}
+.fig .r{fill:var(--rapid)} .fig .rs{stroke:var(--rapid);stroke-width:2.5;fill:none}
+.fig .k{fill:var(--ink)} .fig .ln{stroke:var(--ink);stroke-width:1.5;fill:none}
+.fig .gd{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:5 4;fill:none}
+.fig .lbl{fill:var(--muted);font:600 10px var(--f-mono)}
+.fig .tg{fill:var(--band);font:700 10px var(--f-mono)}
+.fig .cn circle{fill:var(--ink)} .fig .cn text{fill:var(--bg);font:700 12px var(--f-body);text-anchor:middle;dominant-baseline:central}
 .copybox{width:100%;min-height:160px;margin-top:10px;font:13px/1.45 var(--f-mono);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--on-btn);padding:10px 16px;border-radius:10px;font-weight:600;z-index:60}
 
@@ -221,7 +241,7 @@ const CONDS = [
  av:["Never leave a patient alone if you can avoid it.",
   "Without communication, send at least two people for help, with a written SOAP note and location.",
   "Don't split the group without a clear plan for where and when to meet."]},
-{id:"altered",c:"assess",u:"rapid",n:"Altered or unresponsive (cause unclear)",
+{id:"altered",fig:["recovery"],c:"assess",u:"rapid",n:"Altered or unresponsive (cause unclear)",
  s:"Confused, drowsy, combative, or not responding. Treat as a life threat until you find the cause.",
  tx:["Check airway and breathing. Keep the airway open.",
   "No spine concern: place in the recovery position (on their side). Spine concern: keep aligned and log-roll to the side if they vomit.",
@@ -305,7 +325,7 @@ const CONDS = [
  ev:["Always have the baby checked by a doctor after choking that needed back blows or thrusts.","Not cleared, or any unresponsiveness: rapid evacuation."],
  av:["No abdominal thrusts on a baby.","No blind finger sweeps."],
  rel:["cpr-baby","choking"]},
-{id:"bleeding",c:"life",u:"rapid",n:"Severe bleeding",
+{id:"bleeding",fig:["tourniquet", "packing"],c:"life",u:"rapid",n:"Severe bleeding",
  s:"Spurting, steady flow, or blood soaking through. If firm pressure doesn't control a limb bleed right away, use a tourniquet.",
  sg:["Spurting or steady flow.","Blood pooling on the ground or soaking through clothing and dressings.","Partial or complete amputation.","Signs of shock: pale, cool, clammy skin, fast pulse, confusion."],
  tx:["Put on gloves or use a plastic bag as a barrier. Have the person sit or lie down.",
@@ -323,7 +343,7 @@ const CONDS = [
   "Improvised tourniquets often fail. Carry a manufactured one if you expect to need it."],
  lab:{av:"Tourniquet rules"},
  rel:["shock","wound"]},
-{id:"shock",c:"life",u:"rapid",n:"Shock",
+{id:"shock",fig:["hypowrap"],c:"life",u:"rapid",n:"Shock",
  s:"Not enough blood flow to the body's tissues. Find and treat the cause, keep them flat and warm.",
  sg:["Early: anxiety, restlessness, thirst, nausea, fast pulse, pale, cool, clammy skin.",
   "Late: confusion, decreasing responsiveness, fast weak pulse, fast shallow breathing."],
@@ -423,7 +443,7 @@ const CONDS = [
   "Treat for shock, keep warm, and monitor breathing closely."],
  ev:["Rapid evacuation."],
  rel:["rib","shock"]},
-{id:"rib",c:"trauma",u:"evac",n:"Rib injury",
+{id:"rib",fig:["sling"],c:"trauma",u:"evac",n:"Rib injury",
  s:"Painful ribs after a blow or fall, with breathing that stays comfortable.",
  sg:["Pain at one spot on the ribs, worse with breathing, coughing, laughing, or moving.","Tenderness or a grating feeling when pressed.","Holding the arm against that side."],
  tx:["Position of comfort.","Sling and support the arm on the injured side.",
@@ -432,7 +452,7 @@ const CONDS = [
  ev:["Walk out if breathing stays easy.","Rapid evacuation if breathing gets harder: see Serious chest injury."],
  av:["Don't tape or wrap the chest. It rarely helps and can lead to pneumonia."],
  rel:["chest-serious"]},
-{id:"abd-trauma",c:"trauma",u:"rapid",n:"Abdominal or pelvic injury",
+{id:"abd-trauma",fig:["pelvic-wrap"],c:"trauma",u:"rapid",n:"Abdominal or pelvic injury",
  s:"A blow to the belly or pelvis can cause hidden bleeding. Watch for shock.",
  sg:["Pain, tenderness, bruising, or a rigid belly after impact.","Pelvis: pain in hips or groin, or when gently pressing the hip bones inward (check once only).","Signs of shock."],
  tx:["No spine concern: lie flat with knees bent.",
@@ -441,7 +461,7 @@ const CONDS = [
  ev:["Rapid evacuation."],
  av:["Don't rock or repeatedly press the pelvis."],
  rel:["shock"]},
-{id:"fracture",c:"trauma",u:"evac",n:"Broken bone (closed fracture)",
+{id:"fracture",fig:["splint-forearm", "splint-leg", "sling"],c:"trauma",u:"evac",n:"Broken bone (closed fracture)",
  s:"Pain, swelling, or deformity over a bone, with the skin intact. Splint it.",
  sg:["Pain directly over a bone, swelling, bruising.","Deformity, angulation, or grating.","Can't use the limb or bear weight."],
  tx:["Check circulation, sensation, and motion (CSM) beyond the injury.",
@@ -486,7 +506,7 @@ const CONDS = [
   "Splint as for a closed fracture, leaving a window to check the wound."],
  ev:["Rapid evacuation. Needs antibiotics and surgery."],
  rel:["fracture","wound"]},
-{id:"disloc",c:"trauma",u:"evac",n:"Dislocation",
+{id:"disloc",fig:["sling"],c:"trauma",u:"evac",n:"Dislocation",
  s:"A joint out of place. Reduce only when strict conditions are met; otherwise splint and evacuate.",
  sg:["Obvious joint deformity, severe pain, loss of motion.",
   "Shoulder (front, over 90% of cases): arm held down and away from the body, squared-off shoulder, can't bring elbow to waist.","Kneecap: shifted to the outside, knee bent, won't straighten.","Finger: crooked and locked at a joint."],
@@ -502,7 +522,7 @@ const CONDS = [
  av:["Don't reduce a shoulder hurt by a direct blow or major force (a fracture may be present), or one dislocated toward the back.",
   "Don't reduce thumb joints, the finger joint at the knuckle, or open dislocations."],
  rel:["fracture"]},
-{id:"sprain",c:"trauma",u:"field",n:"Sprain or strain",
+{id:"sprain",fig:["splint-leg"],c:"trauma",u:"field",n:"Sprain or strain",
  s:"Joint or muscle injury that can still bear weight without deformity.",
  sg:["Pain and swelling at a joint or muscle, bruising, maybe a pop at injury.","Can still use it or walk on it.","No deformity, no pain directly on bone."],
  tx:["RICES: Rest for 24–48 hours if possible, until it bears weight without pain and swelling is down.",
@@ -675,7 +695,7 @@ const CONDS = [
  tx:["Get out of wind and wet. Add dry layers and a hat.","High-calorie food and a warm, sweet drink.","Then move around or exercise to generate heat."],
  ev:["Getting clumsier, more confused, or apathetic: see Mild hypothermia."],
  rel:["hypo-mild"]},
-{id:"hypo-mild",c:"env",u:"field",n:"Mild hypothermia",
+{id:"hypo-mild",fig:["hypowrap"],c:"env",u:"field",n:"Mild hypothermia",
  s:"Shivering hard, still alert, but clumsy or making poor decisions. Rest, wrap, add heat and calories.",
  sg:["Vigorous shivering.","Alert, but irritable, apathetic, lethargic, or making poor decisions.","Clumsy, stumbling, poor fine motor skills (the “umbles”: stumbles, mumbles, fumbles, grumbles)."],
  tx:["Handle gently.","Have them sit or lie down for at least 30 minutes.",
@@ -686,7 +706,7 @@ const CONDS = [
   "After 30 minutes of rewarming and calories, an alert person who can stand may do light exercise."],
  ev:["No improvement after 30 minutes of rewarming and calories."],
  rel:["cold-stress","hypo-severe","frostbite"]},
-{id:"hypo-severe",c:"env",u:"rapid",n:"Moderate to severe hypothermia",
+{id:"hypo-severe",fig:["hypowrap"],c:"env",u:"rapid",n:"Moderate to severe hypothermia",
  s:"Cold with drowsiness, confusion, or shivering that has slowed or stopped. Handle gently, keep horizontal, wrap, and evacuate.",
  sg:["Moderate: drowsy or confused, poor movement, shivering intermittent or stopped, slowing pulse and breathing.",
   "Severe: barely responsive or unresponsive, no shivering, very slow pulse and breathing, dilated pupils. May appear dead.",
@@ -842,7 +862,7 @@ const CONDS = [
   "Breathing trouble any time in the next 24 hours, persistent cough, or foamy sputum.",
   "Weak pulses, ongoing fast heart rate, or existing heart or lung disease."],
  rel:["cpr","hypo-severe"]},
-{id:"avalanche",c:"env",u:"rapid",n:"Avalanche burial",
+{id:"avalanche",fig:["hypowrap"],c:"env",u:"rapid",n:"Avalanche burial",
  s:"Speed of the dig matters most. Then airway, breathing, hypothermia, and injuries.",
  tx:["Watch for further slides. Turn transceivers to search, probe, and dig from downhill toward the victim.",
   "Expose the face and chest first. Clear the mouth and nose, and note whether there was an air pocket and whether the airway was packed with snow.",
@@ -1011,7 +1031,7 @@ const CONDS = [
   "Suspected high blood sugar: evacuate; it needs insulin and medical care.","Can't manage blood sugar with routine changes, insulin or supplies lost, or the cause is unclear."],
  av:["Never give insulin."],
  rel:["altered","seizure"]},
-{id:"seizure",c:"med",u:"evac",n:"Seizure",
+{id:"seizure",fig:["recovery"],c:"med",u:"evac",n:"Seizure",
  s:"Protect them from injury, time it, and look for a cause.",
  sg:["Sudden jerking or stiffening, loss of awareness.","Drooling, loss of bladder control.","Drowsy and confused for minutes to an hour afterward."],
  tx:["Move hazards away and cushion the head. Don't hold them down or put anything in the mouth.",
@@ -1071,7 +1091,7 @@ const CONDS = [
   "Fever reducer (acetaminophen or ibuprofen) only by the dose on the child product's label for their weight."],
  ev:["First febrile seizure, a seizure over 5 minutes or repeated, not waking normally, breathing trouble, stiff neck, a rash, or a child under 6 months: rapid evacuation.","All febrile seizures should be evaluated by a doctor."],
  rel:["seizure","fever"]},
-{id:"opioid",c:"med",u:"rapid",n:"Opioid overdose",
+{id:"opioid",fig:["recovery"],c:"med",u:"rapid",n:"Opioid overdose",
  s:"Slow or stopped breathing with pinpoint pupils. Give naloxone and support breathing.",
  sg:["Very slow, shallow, snoring, or stopped breathing.","Unresponsive or very hard to wake.","Pinpoint pupils.","Blue or gray lips and fingertips; clammy skin.",
   "Clues: pain pills, patches, needles, a history of use. Street drugs may contain fentanyl."],
@@ -1085,7 +1105,7 @@ const CONDS = [
  ev:["Rapid evacuation for anyone who needed naloxone, even if they recover."],
  av:["Naloxone doesn't reverse alcohol, sedatives, or other drugs, but give it anyway if opioids are possible."],
  rel:["cpr","alcohol","altered"]},
-{id:"alcohol",c:"med",u:"rapid",n:"Alcohol poisoning",
+{id:"alcohol",fig:["recovery"],c:"med",u:"rapid",n:"Alcohol poisoning",
  s:"Too much alcohol can stop breathing, cause choking on vomit, and drop body temperature. Never leave them alone.",
  sg:["Confusion, vomiting, very hard to wake or unresponsive.","Slow or irregular breathing.","Cold, pale, or bluish skin (hypothermia).","Seizures."],
  tx:["Recovery position to protect the airway; don't let them lie on their back.","Stay with them and check breathing regularly.",
@@ -1427,8 +1447,147 @@ const TREE = {
  i13:{p:"Illness",q:"Severe distress or panic, or any talk of suicide or wanting to die?",yes:{add:["psych"]},no:{}}
 };
 
+/* Diagrams: original line drawings. Numbered markers match each figure's steps list. */
+const C=(n,x,y)=>`<g class="cn"><circle cx="${x}" cy="${y}" r="10"/><text x="${x}" y="${y+0.5}">${n}</text></g>`;
+const FIGS = {
+"splint-forearm":{t:"Forearm or wrist splint",
+ svg:`<svg viewBox="0 0 340 170" role="img" aria-label="Forearm splint diagram">
+  <rect class="b" x="38" y="-12" width="36" height="96" rx="18"/>
+  <rect class="s" x="22" y="86" width="276" height="12" rx="4"/>
+  <rect class="b" x="36" y="56" width="226" height="32" rx="16"/>
+  <ellipse class="b" cx="280" cy="74" rx="30" ry="22"/>
+  <circle class="p" cx="276" cy="70" r="10"/>
+  <path class="b" d="M302 64 q14 2 14 10 q0 8 -14 10"/>
+  <path class="p" d="M90 54 h14 l10 46 h-14 z"/><path class="p" d="M150 54 h14 l10 46 h-14 z"/><path class="p" d="M210 54 h14 l10 46 h-14 z"/>
+  <line class="gd" x1="22" y1="112" x2="298" y2="112"/>
+  <text class="lbl" x="160" y="128" text-anchor="middle">splint: past the elbow to the knuckles</text>
+  ${C(1,16,70)}${C(2,276,30)}${C(3,157,30)}${C(4,326,48)}
+ </svg>`,
+ steps:["Splint runs from past the elbow to the knuckles, so the wrist and elbow can't move.","Put a rolled sock or gauze in the hand to hold a natural, slightly curled position.","Pad every gap, then wrap snug but not tight.","Leave fingertips showing. Check color, warmth, and feeling before and after, and loosen if they change."]},
+
+"splint-leg":{t:"Lower leg or ankle splint",
+ svg:`<svg viewBox="0 0 340 170" role="img" aria-label="Lower leg splint diagram">
+  <line class="ln" x1="0" y1="140" x2="340" y2="140"/>
+  <path class="p" d="M58 52 h234 a12 12 0 0 1 12 12 v60 a12 12 0 0 1 -12 12 h-234 a12 12 0 0 1 -12 -12 v-60 a12 12 0 0 1 12 -12 z"/>
+  <rect class="b" x="0" y="64" width="150" height="44" rx="22"/>
+  <rect class="b" x="134" y="70" width="140" height="34" rx="17"/>
+  <rect class="b" x="262" y="28" width="28" height="74" rx="12"/>
+  <ellipse class="p" cx="140" cy="118" rx="22" ry="8"/>
+  <path class="rs" d="M196 72 l6 8 l-6 8 l6 8 l-6 8"/>
+  <rect class="k" x="84" y="50" width="9" height="88" rx="2" opacity=".85"/>
+  <rect class="k" x="166" y="50" width="9" height="88" rx="2" opacity=".85"/>
+  <rect class="k" x="226" y="50" width="9" height="88" rx="2" opacity=".85"/>
+  <ellipse class="ln" cx="276" cy="92" rx="22" ry="7" stroke-width="4"/><ellipse class="ln" cx="276" cy="58" rx="20" ry="7" stroke-width="4"/><path class="ln" d="M258 88 L294 62 M294 88 L258 62" stroke-width="3"/>
+  <text class="lbl" x="199" y="64" text-anchor="middle">injury</text>
+  ${C(1,40,30)}${C(2,140,150)}${C(3,200,30)}${C(4,318,40)}
+ </svg>`,
+ steps:["Foam pad (or pack, pad, or clothing) from mid-thigh to past the foot, so the knee and ankle can't move.","Roll of padding under the knee for a slight, comfortable bend.","Tie above and below the injury, never directly on it.","Figure-eight around the foot to stop it rotating. Leave toes visible and check circulation, sensation, and motion."]},
+
+"sling":{t:"Sling and swathe",
+ svg:`<svg viewBox="0 0 340 200" role="img" aria-label="Sling and swathe diagram">
+  <circle class="b" cx="170" cy="30" r="20"/>
+  <rect class="b" x="161" y="46" width="18" height="16"/>
+  <path class="b" d="M112 66 q58 -14 116 0 l-10 128 h-96 z"/>
+  <rect class="b" x="226" y="64" width="22" height="104" rx="11"/>
+  <rect class="b" x="92" y="64" width="24" height="76" rx="12"/>
+  <rect class="b" x="98" y="112" width="104" height="24" rx="12" transform="rotate(-16 104 130)"/>
+  <ellipse class="b" cx="206" cy="96" rx="13" ry="10"/>
+  <path class="s" d="M146 58 L90 144 L214 110 L206 62 Z" opacity=".78"/>
+  <circle class="p" cx="150" cy="60" r="7"/>
+  <rect class="p" x="84" y="146" width="168" height="16" rx="4" opacity=".95"/>
+  ${C(1,232,96)}${C(2,126,40)}${C(3,268,154)}${C(4,232,124)}
+ </svg>`,
+ steps:["Forearm across the chest with the hand slightly higher than the elbow.","Tie the sling at the side of the neck, not the spine, with padding under the knot.","A swathe (wide band) around the chest holds the arm still against the body.","Check fingers for color, warmth, and feeling; loosen if they change."]},
+
+"tourniquet":{t:"Tourniquet placement",
+ svg:`<svg viewBox="0 0 340 160" role="img" aria-label="Tourniquet placement diagram">
+  <rect class="b" x="-20" y="50" width="200" height="50" rx="25"/>
+  <rect class="b" x="168" y="56" width="172" height="38" rx="19"/>
+  <circle class="ln" cx="178" cy="75" r="4"/>
+  <ellipse class="r" cx="142" cy="72" rx="9" ry="5"/>
+  <path class="rs" d="M142 78 v18"/>
+  <rect class="gd" x="38" y="44" width="16" height="62" rx="3"/>
+  <rect class="s" x="76" y="44" width="16" height="62" rx="3"/>
+  <line class="ln" x1="64" y1="30" x2="104" y2="120" stroke-width="5"/>
+  <rect x="68" y="121" width="32" height="16" rx="3" style="fill:#1B211D;stroke:var(--ink)"/>
+  <text x="84" y="132" text-anchor="middle" class="tg">14:05</text>
+  <path class="ln" d="M92 22 h50 M92 18 v8 M142 18 v8"/>
+  <text class="lbl" x="117" y="14" text-anchor="middle">2–3 in</text>
+  <text class="lbl" x="178" y="118" text-anchor="middle">knee</text>
+  ${C(1,162,18)}${C(2,200,30)}${C(3,124,134)}${C(4,26,124)}
+ </svg>`,
+ steps:["Place the tourniquet 2–3 in (5–7 cm) above the wound, between the wound and the heart.","Never over a joint such as the knee or elbow. If you can't see every wound, go high on the limb.","Pull out all slack, then turn the windlass until bleeding stops and the pulse below is gone.","Lock the windlass and write the time. If bleeding continues, add a second tourniquet just above the first."]},
+
+"packing":{t:"Wound packing",
+ svg:`<svg viewBox="0 0 340 170" role="img" aria-label="Wound packing diagram">
+  <path class="b" d="M0 70 H120 C126 70 128 76 130 84 C138 126 202 126 210 84 C212 76 214 70 220 70 H340 V170 H0 Z"/>
+  <path class="r" d="M162 118 q8 6 16 0 q-8 -2 -16 0z"/>
+  <path class="p" d="M138 86 q32 40 64 0 q-8 30 -32 28 q-24 -2 -32 -28z"/>
+  <path class="p" d="M134 82 h72 l-4 -10 h-64 z"/>
+  <path class="p" d="M140 72 q30 -16 60 0 z"/>
+  <path class="b" d="M150 6 h40 l6 44 q-26 14 -52 0 z"/>
+  <path class="ln" d="M170 52 v8 M162 56 l8 8 l8 -8" stroke-width="2.5"/>
+  <text class="lbl" x="222" y="24">press hard</text>
+  ${C(1,232,108)}${C(2,108,108)}${C(3,226,64)}${C(4,124,24)}
+ </svg>`,
+ steps:["Find the source of bleeding and push gauze directly onto it, deep in the wound.","Keep feeding gauze in tightly until no more fits.","Mound extra gauze on top of the wound.","Press hard with your hands and body weight for at least 3 minutes, then wrap a pressure bandage."]},
+
+"pelvic-wrap":{t:"Pelvic wrap",
+ svg:`<svg viewBox="0 0 340 170" role="img" aria-label="Pelvic wrap diagram, person lying on their back seen from above">
+  <circle class="b" cx="24" cy="85" r="18"/>
+  <path class="b" d="M44 52 h86 q24 0 34 16 v34 q-10 16 -34 16 h-86 z"/>
+  <rect class="b" x="58" y="34" width="70" height="18" rx="9"/>
+  <rect class="b" x="58" y="118" width="70" height="18" rx="9"/>
+  <path class="b" d="M160 60 q16 -8 30 -2 v54 q-14 6 -30 -2 z"/>
+  <rect class="b" x="184" y="56" width="130" height="26" rx="13"/>
+  <rect class="b" x="184" y="88" width="130" height="26" rx="13"/>
+  <rect class="b" x="308" y="52" width="16" height="32" rx="7"/>
+  <rect class="b" x="308" y="86" width="16" height="32" rx="7"/>
+  <rect class="p" x="200" y="80" width="104" height="10" rx="4"/>
+  <line class="gd" x1="140" y1="40" x2="140" y2="130"/>
+  <text class="lbl" x="140" y="148" text-anchor="middle">not the waist</text>
+  <rect class="s" x="168" y="44" width="26" height="82" rx="5"/>
+  <rect class="k" x="244" y="50" width="8" height="70" rx="2" opacity=".85"/>
+  <rect class="k" x="294" y="50" width="8" height="70" rx="2" opacity=".85"/>
+  ${C(1,181,28)}${C(2,226,138)}${C(3,248,28)}${C(4,298,138)}
+ </svg>`,
+ steps:["Wrap tightly around the hips at the level of the hip joints (the bony points level with the groin), not the waist. A sheet, jacket, or sleeping pad works.","Pad between the legs.","Tie the knees together.","Tie the ankles together with the feet pointing up. Then minimize rolling and treat for shock."]},
+
+"hypowrap":{t:"Hypothermia wrap (end view)",
+ svg:`<svg viewBox="0 0 340 190" role="img" aria-label="Hypothermia wrap layers, end view">
+  <line class="ln" x1="0" y1="168" x2="340" y2="168"/>
+  <rect class="p" x="60" y="150" width="220" height="16" rx="4" style="fill:var(--fig-tarp)"/>
+  <path class="t" d="M64 150 C60 70 110 22 170 22 C230 22 280 70 276 150 Z"/>
+  <path class="p" d="M82 148 C80 84 120 40 170 40 C220 40 260 84 258 148 Z"/>
+  <path class="v" d="M110 148 C108 96 136 66 170 66 C204 66 232 96 230 148 Z"/>
+  <ellipse class="b" cx="170" cy="118" rx="52" ry="30"/>
+  <rect class="h" x="150" y="80" width="40" height="12" rx="3"/>
+  <rect class="h" x="108" y="112" width="12" height="24" rx="3"/>
+  <rect class="h" x="220" y="112" width="12" height="24" rx="3"/>
+  <rect class="h" x="150" y="140" width="40" height="8" rx="3"/>
+  ${C(1,40,158)}${C(2,204,80)}${C(3,246,64)}${C(4,170,104)}${C(5,264,32)}
+ </svg>`,
+ steps:["Insulate underneath with sleeping pads or packs first; the ground steals heat fastest.","Vapor barrier of plastic or a foil blanket around the person.","Insulation: sleeping bags, puffy jackets, blankets, including the head and neck.","Heat sources (hot water bottles, heat packs) on the chest, sides, and back, never directly on bare skin. Check the skin hourly.","Outer windproof layer such as a tarp. Leave the face clear and tuck in all the ends."]},
+
+"recovery":{t:"Recovery position (seen from above)",
+ svg:`<svg viewBox="0 0 340 170" role="img" aria-label="Recovery position seen from above">
+  <rect class="b" x="186" y="58" width="140" height="20" rx="10"/>
+  <rect class="b" x="66" y="78" width="18" height="70" rx="9"/>
+  <rect class="b" x="56" y="52" width="140" height="34" rx="16"/>
+  <rect class="b" x="178" y="74" width="24" height="64" rx="12"/>
+  <rect class="b" x="182" y="120" width="104" height="22" rx="11"/>
+  <rect class="b" x="40" y="74" width="40" height="16" rx="8" transform="rotate(25 60 82)"/>
+  <circle class="b" cx="38" cy="66" r="20"/>
+  <ellipse class="b" cx="30" cy="90" rx="11" ry="7"/>
+  <path class="ln" d="M24 74 v22 M18 90 l6 7 l6 -7" stroke-dasharray="0"/>
+  <text class="lbl" x="6" y="122">mouth down</text>
+  ${C(1,64,24)}${C(2,8,82)}${C(3,226,156)}${C(4,126,32)}
+ </svg>`,
+ steps:["Head tilted slightly back, mouth angled down so fluids drain out.","Top hand under the cheek to support the head.","Top knee bent forward to keep them from rolling onto the belly.","Keep checking breathing. With a possible spine injury, log-roll with helpers and keep the head in line with the body."]}
+};
+
 (function(){
-const APP_VERSION = "v4", APP_DATE = "Oct 27, 2026";
+const APP_VERSION = "v5", APP_DATE = "Oct 27, 2026";
 document.getElementById("ver").textContent = APP_VERSION + " · " + APP_DATE;
 const BY = {}; CONDS.forEach((c,i)=>{c.i=i; BY[c.id]=c;});
 const RANK = {rapid:3,evac:2,field:1};
@@ -1511,6 +1670,7 @@ function bodyHTML(c, opts){
   const L = Object.assign({sg:"Signs", tx:"Treatment", ev:"Evacuate if", av:"Avoid"}, c.lab||{});
   let h = "";
   if (opts.signs) h += sec(L.sg, c.sg, "sg", false);
+  (c.fig||[]).forEach(f=>{ const F=FIGS[f]; if(F) h += `<figure class="fig"><h4>${esc(F.t)}</h4>${F.svg}<ol>${F.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></figure>`; });
   h += sec(L.tx, c.tx, "tx", true) + sec(L.ev, c.ev, "ev", false) + sec(L.av, c.av, "av", false);
   return h;
 }
