@@ -1,5 +1,5 @@
 // Bump VERSION whenever any file changes so phones pick up the update.
-const VERSION = "bct-v2";
+const VERSION = "bct-v3";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

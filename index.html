@@ -159,7 +159,7 @@ main .gut{padding-block:20px 56px}
 <body>
 <header class="top">
   <div class="gut">
-    <div class="brand"><b>Backcountry Triage</b><span>Wilderness first aid field guide</span></div>
+    <div class="brand"><b>Backcountry Triage</b><span>Wilderness first aid field guide · <span id="ver"></span></span></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-assess" aria-selected="true">Assess</button>
       <button role="tab" id="tab-lib" aria-selected="false">Conditions</button>
@@ -843,13 +843,13 @@ const CONDS = [
  lab:{sg:"Red flags"},
  sg:["Significant pain lasting more than 8 hours, or sudden, severe pain.","Pain after abdominal trauma.",
   "Pain that limits walking, moving, or eating.","Rigid or swollen belly.","Fever.","Unable to drink or keep fluids down for 24 hours.",
-  "Possible pregnancy (especially with bleeding or signs of shock).","Blood in vomit (coffee grounds), black tarry stool.","Signs of shock.",
+  "Possible pregnancy (especially with bleeding or signs of shock).","Blood in vomit (coffee grounds), black tarry stool, or blood in urine.","Signs of shock.",
   "Appendicitis: pain starts near the navel and moves to the lower right, becoming constant; low fever, no appetite. Sudden relief can mean rupture."],
  tx:["No red flags: rest, clear fluids, simple food, and reassess every few hours.",
   "Red flags: position of comfort, clear liquids only or nothing, monitor vital signs, and watch for shock.",
-  "Pain or burning with urination: drink more; antibiotics if carried and prescribed. Evacuate if fever or back pain develop."],
+  "Burning urination, blood in urine, or back or side pain: see Urinary problems."],
  ev:["Any red flag. Sudden severe pain: immediate evacuation."],
- rel:["gi","shock"]},
+ rel:["gi","urinary","shock"]},
 {id:"gi",c:"med",u:"field",n:"Diarrhea and vomiting",
  s:"Rehydrate in small, frequent sips and tighten up hygiene.",
  tx:["Clear fluids, sports drinks, or oral rehydration solution in small amounts. If tolerated for 12–24 hours, add simple foods.",
@@ -869,6 +869,24 @@ const CONDS = [
   "Not fully alert right away in the heat: treat as heat stroke."],
  ev:["No clear trigger, or fainting during exertion.","Chest pain, palpitations, or breathlessness.","Injury from the fall, slow recovery, repeated episodes, or heart history."],
  rel:["cardiac","heat-minor","heatstroke"]},
+{id:"urinary",c:"med",u:"field",n:"Urinary problems (blood in urine, UTI, kidney stone)",
+ s:"Burning, frequent urination, or blood or dark color in the urine. Most is infection, but some causes need fast evacuation.",
+ lab:{sg:"Likely causes"},
+ sg:["Bladder infection (UTI): burning, frequent or urgent urination with little coming out; urine may be cloudy, pink, or bloody.",
+  "Kidney infection: UTI signs plus fever, chills, or pain in the back or side.",
+  "Kidney stone: sudden, severe pain in the back or side that moves toward the groin, often with nausea; may have blood in the urine.",
+  "Kidney injury: blood in the urine after a fall or a blow to the back, side, or belly.",
+  "Muscle breakdown (rhabdomyolysis): dark cola- or tea-colored urine after extreme exertion, a crush injury, heat illness, or lying immobile a long time; sore, weak, or swollen muscles."],
+ tx:["Drink steadily to keep urine flowing, unless they can't keep fluids down or a kidney injury is suspected.",
+  "UTI: antibiotics if carried and prescribed for this. Urinate often and keep clean.",
+  "Kidney stone: position of comfort, fluids, pain medication per label.",
+  "Possible kidney injury: treat as an abdominal injury. Lay flat, keep warm, nothing by mouth, watch for shock.",
+  "Dark cola-colored urine after exertion or a crush: stop all exertion and start rapid evacuation. It can cause kidney failure. Fluids if alert and able.",
+  "Note urine color, amount, and how often they urinate, and pass it on to rescuers."],
+ ev:["Dark cola-colored urine, blood in urine after trauma, or signs of shock: rapid evacuation.",
+  "Fever, back or side pain, severe pain, vomiting, or very little urine.",
+  "Visible blood that doesn't clear, or a UTI not improving after a day of treatment or with no antibiotics available."],
+ rel:["abd-trauma","abdominal","dehydration","heatstroke"]},
 {id:"hantavirus",c:"med",u:"evac",n:"Hantavirus",
  s:"A rare but often fatal lung infection from deer mouse droppings and urine.",
  sg:["Exposure 1–8 weeks earlier: cleaning or sleeping in a mouse-infested cabin, shed, or other closed space.",
@@ -950,7 +968,7 @@ const TREE = {
  c1:{p:"Injury survey",q:"Any chest injury, or pain when breathing in deeply?",yes:{to:"c2"},no:{to:"a1"}},
  c2:{p:"Injury survey",q:"Is breathing getting harder, does part of the chest move the wrong way, or is there a hole in the chest wall?",
   yes:{to:"a1",add:["chest-serious"]},no:{to:"a1",add:["rib"]}},
- a1:{p:"Injury survey",q:"Any blow to the belly or pelvis, or is the belly rigid or very tender?",
+ a1:{p:"Injury survey",q:"Any blow to the belly, back, or pelvis, blood in the urine, or is the belly rigid or very tender?",
   yes:{to:"l1",add:["abd-trauma"]},no:{to:"l1"}},
  l1:{p:"Injury survey",q:"Pain, swelling, or deformity in an arm, leg, or joint?",yes:{to:"l2"},no:{to:"w1"}},
  l2:{p:"Injury survey",q:"Is a bone end visible, or is there a wound over the injury?",
@@ -1038,17 +1056,24 @@ const TREE = {
  i5:{p:"Illness",q:"Are they confused, very drowsy, or acting abnormally?",yes:{add:["altered"]},no:{to:"i6"}},
  i6:{p:"Illness",q:"Did they faint or briefly pass out?",yes:{to:"i7",add:["faint"]},no:{to:"i7"}},
  i7:{p:"Illness",q:"Belly pain?",yes:{to:"i8"},no:{to:"i9"}},
- i8:{p:"Illness",q:"Any red flags: significant pain over 8 hours or sudden severe pain, pain in one spot (especially lower right), rigid or swollen belly, pain that limits walking or eating, fever, blood in vomit or stool, or possible pregnancy?",
+ i8:{p:"Illness",q:"Any red flags: significant pain over 8 hours or sudden severe pain, pain in one spot (especially lower right), rigid or swollen belly, pain that limits walking or eating, fever, blood in vomit, stool, or urine, or possible pregnancy?",
   yes:{to:"i9",add:["abdominal"],esc:{abdominal:"rapid"}},no:{to:"i9",add:["abdominal"]}},
- i9:{p:"Illness",q:"Diarrhea or vomiting?",yes:{to:"i10"},no:{to:"i11"}},
+ i9:{p:"Illness",q:"Diarrhea or vomiting?",yes:{to:"i10"},no:{to:"u1"}},
  i10:{p:"Illness",q:"Lasting more than 24 hours, fever, blood in stool or vomit, unable to keep fluids down, or getting weaker?",
-  yes:{to:"i11",add:["gi"],esc:{gi:"evac"}},no:{to:"i11",add:["gi"]}},
+  yes:{to:"u1",add:["gi"],esc:{gi:"evac"}},no:{to:"u1",add:["gi"]}},
+ u1:{p:"Illness",q:"Blood in the urine, dark cola-colored urine, burning when urinating, or severe back or side pain?",yes:{to:"u2"},no:{to:"i11"}},
+ u2:{p:"Illness",q:"Is the urine dark like cola or tea after hard exertion, a crush injury, or heat illness? Or is there blood after a fall or blow, or signs of shock?",
+  yes:{to:"i11",add:["urinary"],esc:{urinary:"rapid"}},no:{to:"u3"}},
+ u3:{p:"Illness",q:"Fever, back or side pain, severe pain, vomiting, very little urine, or visible blood?",
+  yes:{to:"i11",add:["urinary"],esc:{urinary:"evac"}},no:{to:"i11",add:["urinary"]}},
  i11:{p:"Illness",q:"Itchy rash or hives after a food, medication, or plant?",yes:{to:"i12",add:["allergic-mild"]},no:{to:"i12"}},
  i12:{p:"Illness",q:"Fever, body aches, or a cough after cleaning or sleeping in a building with mouse droppings?",yes:{to:"i13",add:["hantavirus"]},no:{to:"i13"}},
  i13:{p:"Illness",q:"Severe distress or panic, or any talk of suicide or wanting to die?",yes:{add:["psych"]},no:{}}
 };
 
 (function(){
+const APP_VERSION = "v3", APP_DATE = "Oct 27, 2026";
+document.getElementById("ver").textContent = APP_VERSION + " · " + APP_DATE;
 const BY = {}; CONDS.forEach((c,i)=>{c.i=i; BY[c.id]=c;});
 const RANK = {rapid:3,evac:2,field:1};
 const ULABEL = {rapid:"Rapid evac",evac:"Evacuate",field:"Field care"};
@@ -1178,7 +1203,7 @@ function renderLib(){
     const items = list.filter(c=>c.c===k); if(!items.length) return;
     h += `<section class="group"><h2>${esc(v)} · ${items.length}</h2><div class="rows">${items.map(c=>`<button class="row" data-open="${c.id}"><b>${esc(c.n)}</b>${c.u?`<span class="pill ${c.u}">${ULABEL[c.u]}</span>`:"<span></span>"}<span class="s">${esc(c.s)}</span></button>`).join("")}</div></section>`;
   });
-  h += `<p class="disc">Urgency shown is the usual starting point. Answers in the assessment can raise it. Aligned with Aerie Backcountry Medicine, Wilderness Medicine 15th ed. Doses refer to the product label or a prescription the person carries.</p>`;
+  h += `<p class="disc">Version ${APP_VERSION} · ${APP_DATE}. Urgency shown is the usual starting point. Answers in the assessment can raise it. Aligned with Aerie Backcountry Medicine, Wilderness Medicine 15th ed. Doses refer to the product label or a prescription the person carries.</p>`;
   view.innerHTML = h;
   const inp = document.getElementById("q");
   inp.oninput = e => { libQ = e.target.value; const pos = e.target.selectionStart; renderLib(); const n=document.getElementById("q"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} };
