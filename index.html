@@ -144,6 +144,28 @@ main .gut{padding-block:20px 56px}
 .fig .lbl{fill:var(--muted);font:600 10px var(--f-mono)}
 .fig .tg{fill:var(--band);font:700 10px var(--f-mono)}
 .fig .cn circle{fill:var(--ink)} .fig .cn text{fill:var(--bg);font:700 12px var(--f-body);text-anchor:middle;dominant-baseline:central}
+.now{margin:14px 0 0;border:2px solid var(--ink);border-radius:12px;padding:12px 14px;background:var(--surface)}
+.now.rapid{border-color:var(--rapid)}
+.now h3{font:700 12px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;margin:0 0 8px;color:var(--muted)}
+.now.rapid h3{color:var(--rapid)}
+.now ol{margin:0;padding-left:1.3em;display:grid;gap:8px;font-size:18px;line-height:1.35;font-weight:600}
+.now ol li::marker{font-family:var(--f-mono)}
+.beatbtn{margin-top:12px;width:100%;min-height:52px;border-radius:12px;border:2px solid var(--ink);background:var(--btn);color:var(--on-btn);font-weight:700;font-size:16px}
+.beat{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--rapid);color:var(--surface);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:14px}
+.beat .dot{width:54px;height:54px;border-radius:50%;background:var(--surface);color:var(--rapid);display:grid;place-items:center;font:800 26px/1 var(--f-display);font-variant-numeric:tabular-nums;flex:none}
+.beat .dot.hit{transform:scale(1.18)}
+.beat .msg{flex:1;min-width:0;font-weight:700;font-size:17px;line-height:1.2}
+.beat .msg small{display:block;font-weight:500;font-size:13px;opacity:.9}
+.beat button{border:2px solid var(--surface);background:transparent;color:var(--surface);border-radius:10px;padding:10px 16px;font-weight:700}
+.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ubtn{min-height:68px;text-align:left;padding:12px 14px;border-radius:14px;border:2px solid var(--rapid);background:var(--rapid-bg);color:var(--ink);font:700 18px/1.15 var(--f-display);font-stretch:condensed}
+.ubtn.plain{border-color:var(--line);background:var(--surface)}
+.uh{font:600 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+.uh:first-child{margin-top:0}
+.homeq{margin-top:26px}
+.homeq label{display:block;font:600 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.jump{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tabs{flex:1 1 auto;justify-content:stretch}.tabs button{flex:1}
 .copybox{width:100%;min-height:160px;margin-top:10px;font:13px/1.45 var(--f-mono);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--on-btn);padding:10px 16px;border-radius:10px;font-weight:600;z-index:60}
 
@@ -182,7 +204,8 @@ main .gut{padding-block:20px 56px}
     <div class="brand"><b>Backcountry Triage</b><span>Wilderness first aid field guide · <span id="ver"></span></span></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-assess" aria-selected="true">Assess</button>
-      <button role="tab" id="tab-lib" aria-selected="false">Conditions</button>
+      <button role="tab" id="tab-urgent" aria-selected="false">Urgent</button>
+      <button role="tab" id="tab-lib" aria-selected="false">Library</button>
     </div>
   </div>
 </header>
@@ -194,11 +217,12 @@ main .gut{padding-block:20px 56px}
   <div class="gut content" id="sheet-body"></div>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div class="beat" id="beat" hidden><div class="dot" id="beat-n">1</div><div class="msg" id="beat-msg">Push hard and fast<small>30 compressions, then 2 breaths</small></div><button id="beat-stop">Stop</button></div>
 
 <script>
 const CONDS = [
 /* ---------- ASSESSMENT ---------- */
-{id:"scene",c:"assess",u:null,n:"Scene safety",
+{id:"scene",now:["Stop. Look for what could hurt you.", "Don't become a second patient."],c:"assess",u:null,n:"Scene safety",
  s:"Your safety comes first. A rescuer who gets hurt doubles the emergency.",
  lab:{tx:"Steps"},
  tx:["Stop and look for hazards still in play: rockfall, avalanche, lightning, moving water, falling trees, animals, traffic.",
@@ -214,19 +238,21 @@ const CONDS = [
   "Circulation: find and stop severe bleeding. Check for a pulse at the wrist or neck.",
   "Disability: was there a mechanism for spine injury? Note responsiveness on the AVPU scale (Alert, responds to Voice, responds to Pain, Unresponsive).",
   "Environment and expose: protect from cold, heat, and the ground. Expose injuries enough to see them."]},
-{id:"vitals",c:"assess",u:null,n:"Vital signs and SOAP note",
+{id:"vitals",kw:"pulse heart rate breathing rate normal soap",c:"assess",u:null,n:"Vital signs and SOAP note",
  s:"Record a baseline, then repeat every 15 minutes for serious problems. Trends matter more than single numbers.",
  lab:{sg:"Vital signs",tx:"SOAP note"},
  sg:["Level of responsiveness (AVPU), and whether they know who they are, where they are, when it is, and what happened.",
   "Heart rate: normal adult 50–100 per minute. Note strong or weak, regular or irregular.",
   "Respiratory rate: normal adult 12–20 per minute. Note easy or labored.",
   "Skin: color, temperature, moisture (pink, warm, dry is normal).",
-  "Pupils: equal, round, react to light."],
+  "Pupils: equal, round, react to light.",
+  "Children: age 1–5, pulse 80–140 and breathing 20–40. Age 6–12, pulse 70–120 and breathing 18–30. Babies under 1, pulse 100–160 and breathing 30–60.",
+  "Worrying trends: pulse and breathing rate climbing, responsiveness dropping, skin turning pale, cool, and clammy."],
  tx:["S, Subjective: age, sex, chief complaint, what happened. SAMPLE history: Symptoms, Allergies, Medications, Past history, Last intake and output, Events leading up.",
   "O, Objective: head-to-toe exam findings and vital signs with times.",
   "A, Assessment: your problem list.",
   "P, Plan: treatment for each problem, evacuation plan, and what to watch for."]},
-{id:"evacuation",c:"assess",u:null,n:"Evacuation and calling for help",
+{id:"evacuation",kw:"sos 911 rescue call help satellite inreach helicopter",c:"assess",u:null,n:"Evacuation and calling for help",
  s:"Decide how fast this person needs medical care, and what you'll tell rescuers.",
  lab:{sg:"Evacuation levels",tx:"When you call or send for help",av:"Group management"},
  sg:["Rapid evacuation: life threat or getting worse. Fastest means available, including helicopter.",
@@ -237,11 +263,13 @@ const CONDS = [
   "Vital signs and how they're changing.",
   "Treatment given so far and what supplies you have.",
   "Weather, daylight, and any spot where a helicopter could land.",
-  "Your plan: staying put or moving, and how rescuers will find you."],
+  "Your plan: staying put or moving, and how rescuers will find you.",
+  "Short satellite text: WHO (age, sex), WHAT (problem and condition), WHERE (coordinates), NEED (helicopter, litter team, advice), PLAN (staying or moving).",
+  "In the US you can text 911 in many areas. Try a call first, then text, then the satellite SOS."],
  av:["Never leave a patient alone if you can avoid it.",
   "Without communication, send at least two people for help, with a written SOAP note and location.",
   "Don't split the group without a clear plan for where and when to meet."]},
-{id:"altered",fig:["recovery"],c:"assess",u:"rapid",n:"Altered or unresponsive (cause unclear)",
+{id:"altered",kw:"unconscious passed out confused not responding unresponsive",now:["Check breathing. Open the airway.", "Roll them onto their side. Keep the spine in line if they may be injured.", "Diabetic and able to swallow: give sugar.", "Keep warm. Send for help."],fig:["recovery"],c:"assess",u:"rapid",n:"Altered or unresponsive (cause unclear)",
  s:"Confused, drowsy, combative, or not responding. Treat as a life threat until you find the cause.",
  tx:["Check airway and breathing. Keep the airway open.",
   "No spine concern: place in the recovery position (on their side). Spine concern: keep aligned and log-roll to the side if they vomit.",
@@ -254,28 +282,30 @@ const CONDS = [
  rel:["tbi","hypo-severe","heatstroke","hypoglycemia","seizure","stroke","hace","hyponatremia","co"]},
 
 /* ---------- LIFE THREATS ---------- */
-{id:"cpr",fig:["cpr-hands"],c:"life",u:"rapid",n:"CPR: adult or teen",
+{id:"cpr",kw:"cardiac arrest no pulse not breathing heart stopped resuscitation",now:["Send for help or trigger SOS.", "Push hard and fast on the center of the chest: 2 in deep, 100–120 a minute.", "30 pushes, then 2 breaths. Repeat.", "Don't stop until help takes over or they breathe."],fig:["cpr-hands"],beat:1,c:"life",u:"rapid",n:"CPR: adult or teen",
  s:"Unresponsive and not breathing normally. Start CPR and send for help now.",
  sg:["Unresponsive.","No breathing, or only occasional gasps.","No pulse (don't spend more than 10 seconds checking, or 60 seconds if hypothermic)."],
- tx:["Send someone to call 911 or trigger SOS now. Alone with a phone: call first, then start.",
-  "Lay the person on their back on a firm surface.",
-  "Compressions: heel of hand on the lower half of the breastbone, other hand on top. Push 2–2.4 in (5–6 cm) deep at 100–120 per minute and let the chest fully recoil. Don't stop to remove a heavy jacket; push harder instead.",
-  "After 30 compressions, open the airway and give 2 breaths of about 1 second each, just enough to make the chest rise. Keep going at 30:2 and minimize pauses.",
-  "If a breath doesn't go in: retilt the head and try once more. Before the next breaths, look in the mouth and remove anything you can see.",
-  "Unable or unwilling to give breaths: compression-only CPR is far better than nothing. Breaths matter most for drowning, choking, anaphylaxis, and children.",
-  "Drowning or lightning: start with 5 rescue breaths. Breathing failure is usually the cause.",
-  "Possible opioid overdose: give naloxone as soon as it's available, without stopping CPR for long.",
-  "Visibly pregnant: raise the right hip 3–4 in (7–10 cm) with padding to take weight off the major vessels.",
+ tx:["Send someone to call 911 or trigger SOS. Alone with a phone or messenger: call first, then start.",
+  "Lay them on their back on a firm surface. Kneel beside the chest.",
+  "Heel of one hand on the lower half of the breastbone, other hand on top. Push 2–2.4 in (5–6 cm) deep, 100–120 times a minute. Let the chest rise fully each time.",
+  "After 30 compressions: tilt the head, lift the chin, give 2 breaths of 1 second each, just enough to see the chest rise.",
+  "Keep going, 30 and 2, with as few pauses as possible. Swap rescuers every 2 minutes if you can.",
+  "Use an AED as soon as one is available."],
+ more:["Can't or won't give breaths: compressions alone are far better than nothing.",
+  "A breath won't go in: retilt the head and try once more. Then look in the mouth before the next breaths and remove anything you can see.",
+  "Drowning, avalanche, or lightning: start with 5 rescue breaths.",
+  "Possible opioid overdose: give naloxone as soon as you can.",
   "Vomiting: roll them toward you, wipe the mouth, roll back, continue.",
-  "Hypothermia: check breathing and pulse for a full 60 seconds before starting. CPR can stop a very cold heart that is still beating slowly, so be sure first, and handle gently.",
-  "Use an AED if one is available."],
+  "Visibly pregnant: pad under the right hip to tilt them 3–4 in (7–10 cm).",
+  "Hypothermia: check breathing and pulse for a full 60 seconds first. CPR can stop a very cold heart that is still beating slowly.",
+  "Heavy jacket: don't stop to remove it. Push harder."],
  ev:["Rapid evacuation."],
  av:["Don't start CPR with obvious signs of death: injuries incompatible with life, stiffening (rigor mortis), dark blood pooling in the lowest parts of the body, or a cool body with no cold exposure.",
   "You may stop after 30 minutes if the person is not hypothermic and advanced care is more than an hour away. Also stop if you're exhausted, the scene becomes unsafe, others with equal or more training take over, or they show clear signs of life.",
   "Prolonged CPR is worth it in hypothermia, lightning strike, and cold-water drowning."],
- lab:{av:"Starting and stopping"},
- rel:["cpr-child","cpr-baby","opioid","drowning","lightning","hypo-severe"]},
-{id:"cpr-child",fig:["cpr-hands"],c:"life",u:"rapid",n:"CPR: child (1 year to puberty)",
+ lab:{av:"Starting and stopping",more:"Special situations"},
+ rel:["cpr-child","cpr-baby","opioid","drowning","lightning","hypo-severe","death"]},
+{id:"cpr-child",beat:1,now:["Send for help. Alone: do 2 minutes of CPR first.", "One or two hands on the breastbone. Push one-third of the chest deep, 100–120 a minute.", "30 pushes, then 2 gentle breaths. Repeat."],fig:["cpr-hands"],c:"life",u:"rapid",n:"CPR: child (1 year to puberty)",
  s:"Children usually arrest from breathing problems, so rescue breaths matter. Same 30:2 rhythm as adults, with gentler compressions.",
  sg:["Unresponsive and not breathing, or only gasping."],
  tx:["Send someone to call 911 or trigger SOS. Alone: do 2 minutes (5 cycles of 30:2) first, then call, bringing the child with you if you can.",
@@ -286,7 +316,7 @@ const CONDS = [
   "Drowning: start with 5 rescue breaths."],
  ev:["Rapid evacuation."],
  rel:["cpr","cpr-baby","choking"]},
-{id:"cpr-baby",fig:["cpr-hands"],c:"life",u:"rapid",n:"CPR: baby (under 1 year)",
+{id:"cpr-baby",beat:1,now:["Send for help. Alone: do 2 minutes of CPR first.", "Two fingers on the breastbone just below the nipple line. Push one-third of the chest deep.", "30 pushes, then 2 small puffs over the mouth and nose. Repeat."],fig:["cpr-hands"],c:"life",u:"rapid",n:"CPR: baby (under 1 year)",
  s:"Two fingers or two thumbs on the chest, small puffs covering the mouth and nose.",
  sg:["Unresponsive (no reaction to a tap on the foot or your voice) and not breathing normally."],
  tx:["Send someone to call 911 or trigger SOS. Alone: do 2 minutes of CPR first, then call, carrying the baby with you.",
@@ -297,7 +327,7 @@ const CONDS = [
   "Drowning: start with 5 rescue breaths."],
  ev:["Rapid evacuation."],
  rel:["choking-baby","cpr-child"]},
-{id:"choking",c:"life",u:"rapid",n:"Choking: adult or child over 1 year",
+{id:"choking",kw:"heimlich food stuck airway",now:["Can't cough, speak, or breathe: 5 hard back blows.", "Then 5 abdominal thrusts just above the navel.", "Repeat. If they go limp, start CPR."],c:"life",u:"rapid",n:"Choking: adult or child over 1 year",
  s:"If they can cough, let them cough. If they can't breathe, speak, or cough, act now.",
  sg:["Sudden inability to speak, breathe, or cough, often while eating.","High-pitched squeaking, hands at the throat, panicked look.","Color change in lips and face, then loss of consciousness."],
  tx:["Partial choking (coughing, can speak): have them sit up and cough hard. Don't hit their back. Stay with them.",
@@ -313,7 +343,7 @@ const CONDS = [
   "After partial choking, watch for several hours for breathing problems."],
  av:["Blind finger sweeps can push the object deeper."],
  rel:["choking-baby","cpr","cpr-child"]},
-{id:"choking-baby",fig:["baby-choking"],c:"life",u:"rapid",n:"Choking: baby (under 1 year)",
+{id:"choking-baby",now:["Face-down along your forearm, head low: 5 back blows.", "Turn face-up: 5 chest thrusts with two fingers.", "Repeat. If the baby goes limp, start baby CPR."],fig:["baby-choking"],c:"life",u:"rapid",n:"Choking: baby (under 1 year)",
  s:"Back blows and chest thrusts with the baby head-down along your forearm. Never abdominal thrusts.",
  sg:["Can't cry, cough, or breathe; weak or silent cough; high-pitched noises.","Color change in lips and face."],
  tx:["Sit or kneel. Lay the baby face-down along your forearm, holding the jaw in your hand, head lower than the body, forearm resting on your thigh.",
@@ -325,7 +355,7 @@ const CONDS = [
  ev:["Always have the baby checked by a doctor after choking that needed back blows or thrusts.","Not cleared, or any unresponsiveness: rapid evacuation."],
  av:["No abdominal thrusts on a baby.","No blind finger sweeps."],
  rel:["cpr-baby","choking"]},
-{id:"bleeding",fig:["tourniquet", "packing"],c:"life",u:"rapid",n:"Severe bleeding",
+{id:"bleeding",kw:"hemorrhage blood amputation artery tourniquet bleeding out",now:["Press hard directly on the wound.", "Arm or leg still bleeding: tourniquet 2–3 in above the wound. Tighten until it stops.", "Neck, armpit, or groin: pack the wound with gauze and press for 3 minutes.", "Lay them flat and keep them warm."],fig:["tourniquet", "packing"],c:"life",u:"rapid",n:"Severe bleeding",
  s:"Spurting, steady flow, or blood soaking through. If firm pressure doesn't control a limb bleed right away, use a tourniquet.",
  sg:["Spurting or steady flow.","Blood pooling on the ground or soaking through clothing and dressings.","Partial or complete amputation.","Signs of shock: pale, cool, clammy skin, fast pulse, confusion."],
  tx:["Put on gloves or use a plastic bag as a barrier. Have the person sit or lie down.",
@@ -343,7 +373,7 @@ const CONDS = [
   "Improvised tourniquets often fail. Carry a manufactured one if you expect to need it."],
  lab:{av:"Tourniquet rules"},
  rel:["shock","wound"]},
-{id:"shock",fig:["hypowrap"],c:"life",u:"rapid",n:"Shock",
+{id:"shock",kw:"pale clammy weak pulse blood loss",now:["Stop any bleeding.", "Lay flat, insulate from the ground, keep warm.", "Nothing by mouth. Rapid evacuation, carried."],fig:["hypowrap"],c:"life",u:"rapid",n:"Shock",
  s:"Not enough blood flow to the body's tissues. Find and treat the cause, keep them flat and warm.",
  sg:["Early: anxiety, restlessness, thirst, nausea, fast pulse, pale, cool, clammy skin.",
   "Late: confusion, decreasing responsiveness, fast weak pulse, fast shallow breathing."],
@@ -354,7 +384,7 @@ const CONDS = [
   "Check vital signs every 15 minutes. Shock gets worse over time, so watch the trend."],
  ev:["Always. Rapid evacuation, carried. Don't let them walk out."],
  rel:["bleeding","anaphylaxis","abd-trauma","fracture"]},
-{id:"anaphylaxis",c:"life",u:"rapid",n:"Anaphylaxis (severe allergic reaction)",
+{id:"anaphylaxis",kw:"allergy epipen epinephrine throat closing peanut bee",now:["Epinephrine into the outer thigh now.", "Lay them flat. Sit them up if breathing is hard.", "Not better in 5–15 minutes: second dose.", "Rapid evacuation, even if they improve."],c:"life",u:"rapid",n:"Anaphylaxis (severe allergic reaction)",
  s:"A body-wide allergic reaction that can close the airway or drop blood pressure. Give epinephrine immediately.",
  sg:["After a sting, food, medication, or other trigger: skin or mouth symptoms (hives, swelling of lips, tongue, or throat) that come on fast together with trouble breathing, faintness, or persistent vomiting.",
   "Or sudden trouble breathing, severe wheezing, throat tightness, or signs of shock, even without any skin signs.",
@@ -369,19 +399,19 @@ const CONDS = [
  av:["Don't wait to see if it gets worse before giving epinephrine.","Antihistamines alone do not treat anaphylaxis.",
   "Giving your own epinephrine to someone else may require local laws or physician protocols. Sort this out before a trip, especially if you lead clients."],
  rel:["sting","allergic-mild"]},
-{id:"breathing-unclear",c:"life",u:"rapid",n:"Breathing difficulty (cause unclear)",
+{id:"breathing-unclear",now:["Sit them upright. Loosen clothing.", "Allergic reaction: epinephrine. Asthma: inhaler.", "At altitude: descend.", "Send for help."],c:"life",u:"rapid",n:"Breathing difficulty (cause unclear)",
  s:"Struggling to breathe without an obvious cause. Treat as serious until you know why.",
  tx:["Sit them upright or in whatever position is most comfortable. Loosen tight clothing.",
   "Coach slow, steady breaths.",
-  "Look for a cause: anaphylaxis, asthma, chest injury, heart attack, HAPE at altitude, water inhaled.",
+  "Look for a cause: anaphylaxis, asthma, chest injury, heart attack, HAPE at altitude, water inhaled, a clot in the lung (sudden, sharp chest pain), or a collapsed lung (sudden one-sided chest pain, often in a tall, thin young person).",
   "At altitude, descend.",
   "Check vital signs every 15 minutes."],
  ev:["Rapid evacuation."],
  av:["Don't assume panic or hyperventilation until every other cause is ruled out."],
- rel:["anaphylaxis","asthma","chest-serious","cardiac","hape","drowning"]},
+ rel:["anaphylaxis","asthma","chest-serious","cardiac","hape","drowning","clot","hyperventilation"]},
 
 /* ---------- INJURIES ---------- */
-{id:"tbi",fig:["log-roll"],c:"trauma",u:"rapid",n:"Serious head injury",
+{id:"tbi",kw:"concussion knocked out skull brain",now:["Keep the head and neck still.", "Vomiting or unresponsive: roll onto the side as one unit to keep the airway clear.", "Rapid evacuation. Recheck responsiveness every 15 minutes."],fig:["log-roll"],c:"trauma",u:"rapid",n:"Serious head injury",
  s:"Head injury with signs the brain is affected. Protect the airway and spine, and get out fast.",
  sg:["Any loss of consciousness, or any change in responsiveness.","Confusion, irritability, combativeness, or repeating the same questions.","Repeated vomiting, worsening headache, seizure.",
   "Signs of rising pressure in the skull: unequal pupils, bruising behind the ears or around both eyes, abnormal posturing, irregular breathing, slowing pulse.","Clear fluid or blood from ears or nose."],
@@ -393,7 +423,7 @@ const CONDS = [
   "Record responsiveness, pupils, and vital signs every 15 minutes."],
  ev:["Rapid evacuation. Don't wait for vomiting or seizures to start."],
  rel:["concussion","spine","seizure","altered"]},
-{id:"concussion",c:"trauma",u:"field",n:"Minor head injury (concussion)",
+{id:"concussion",kw:"hit head bump dazed",c:"trauma",u:"field",n:"Minor head injury (concussion)",
  s:"Dazed or headachy after a knock, with symptoms that ease over time. Watch closely for 24 hours.",
  sg:["Dazed, foggy, or slow to answer at first.","Mild headache, dizziness, nausea, or fatigue.","Sensitive to light or noise."],
  tx:["Stop the activity and rest.",
@@ -403,7 +433,7 @@ const CONDS = [
  ev:["Any loss of consciousness or change in responsiveness.","Takes blood thinners (warfarin and similar).",
   "Symptoms getting worse, or any red flag from Serious head injury.","Consider evacuating anyway if you're responsible for them as a guide or leader."],
  rel:["tbi"]},
-{id:"spine",fig:["log-roll"],c:"trauma",u:"rapid",n:"Possible spinal injury",
+{id:"spine",kw:"neck back broken paralysis",now:["Hold the head still, in line with the body.", "Don't move them unless they're in danger or the airway is blocked.", "Check feeling and movement in hands and feet."],fig:["log-roll"],c:"trauma",u:"rapid",n:"Possible spinal injury",
  s:"A mechanism that could injure the spine, plus findings you can't rule out. Keep them aligned and still.",
  sg:["Mechanism: high fall, high-speed impact, diving, being thrown, a blow to the top of the head. Mechanism alone doesn't prove injury, but should raise suspicion.",
   "Pain or tenderness along the middle of the neck or back.","Numbness, tingling, or weakness in arms or legs, or unequal grip or foot strength.",
@@ -420,7 +450,7 @@ const CONDS = [
  av:["Spine precautions are not needed for a stab or gunshot wound alone, without blunt trauma."],
  lab:{av:"Note"},
  rel:["tbi"]},
-{id:"crush",c:"trauma",u:"rapid",n:"Crush injury and entrapment",
+{id:"crush",now:["Free the head and chest first.", "Have a tourniquet ready before freeing a limb.", "Treat for shock. Rapid evacuation."],c:"trauma",u:"rapid",n:"Crush injury and entrapment",
  s:"A body part trapped under heavy weight. Long entrapment can cause muscle breakdown and dangerous shifts in blood chemistry once it's released.",
  sg:["Pinned under a rock, log, vehicle, or debris.","Pain, swelling, bruising, deformity; numb, pale, or cold beyond the crush.",
   "After release: rapid swelling, shock, irregular pulse, dark urine (rhabdomyolysis)."],
@@ -433,7 +463,18 @@ const CONDS = [
   "Watch for dark urine, little urine, and an irregular pulse."],
  ev:["Limb trapped more than about an hour, any crush of the torso, signs of shock, or dark urine: rapid evacuation.","All other crush injuries: evacuate for assessment."],
  rel:["rhabdo","bleeding","shock","fracture"]},
-{id:"chest-serious",c:"trauma",u:"rapid",n:"Serious chest injury",
+{id:"compartment",c:"trauma",u:"rapid",n:"Compartment syndrome (pressure in a limb)",
+ now:["Loosen or remove every splint, wrap, and boot on the limb.","Keep the limb level with the heart. No ice.","Rapid evacuation: needs surgery within hours."],
+ kw:"tight swelling pain out of proportion numb limb",
+ s:"Swelling trapped inside a limb cuts off its own blood supply. The key sign is severe pain that keeps getting worse.",
+ sg:["Usually the lower leg or forearm, after a fracture, crush, hard blow, snakebite, or a splint or wrap that's too tight.",
+  "Pain far worse than the injury explains, increasing, and not helped by pain medication.","Sharp pain when you gently stretch their toes or fingers.",
+  "Tight, hard, shiny swelling.","Numbness or tingling. Paleness, weakness, and loss of pulse come late."],
+ tx:["Remove or loosen anything around the limb: splints, bandages, boots, tight clothing.","Keep the limb at heart level. Raising it higher reduces blood flow.",
+  "No ice and no compression wraps.","Re-splint loosely for travel and recheck often."],
+ ev:["Always. Rapid evacuation; muscle starts to die within about 6 hours."],
+ rel:["fracture","crush","rhabdo","snakebite"]},
+{id:"chest-serious",kw:"punctured lung collapsed pneumothorax flail",now:["Sit them up, or lay them on the injured side.", "Sucking wound: vented seal, or plastic taped on 3 sides.", "Rapid evacuation."],c:"trauma",u:"rapid",n:"Serious chest injury",
  s:"Chest trauma affecting breathing. Can become fatal quickly, and the full injury is often hidden at first.",
  sg:["Breathing getting harder, fast heart rate.","Part of the chest moving the wrong way when breathing (flail segment: several ribs broken in more than one place).",
   "Open wound that bubbles or sucks air.","Coughing blood or pink sputum.","Signs of shock."],
@@ -452,7 +493,7 @@ const CONDS = [
  ev:["Walk out if breathing stays easy.","Rapid evacuation if breathing gets harder: see Serious chest injury."],
  av:["Don't tape or wrap the chest. It rarely helps and can lead to pneumonia."],
  rel:["chest-serious"]},
-{id:"abd-trauma",fig:["pelvic-wrap"],c:"trauma",u:"rapid",n:"Abdominal or pelvic injury",
+{id:"abd-trauma",kw:"pelvis internal bleeding kidney spleen",now:["Lay flat with knees bent.", "Pelvis injury: wrap tightly around the hips; tie knees and ankles together.", "Keep warm. Nothing by mouth. Rapid evacuation."],fig:["pelvic-wrap"],c:"trauma",u:"rapid",n:"Abdominal or pelvic injury",
  s:"A blow to the belly or pelvis can cause hidden bleeding. Watch for shock.",
  sg:["Pain, tenderness, bruising, or a rigid belly after impact.","Pelvis: pain in hips or groin, or when gently pressing the hip bones inward (check once only).","Signs of shock."],
  tx:["No spine concern: lie flat with knees bent.",
@@ -461,7 +502,7 @@ const CONDS = [
  ev:["Rapid evacuation."],
  av:["Don't rock or repeatedly press the pelvis."],
  rel:["shock"]},
-{id:"fracture",fig:["splint-forearm", "splint-leg", "sling"],c:"trauma",u:"evac",n:"Broken bone (closed fracture)",
+{id:"fracture",kw:"broken bone break splint arm leg wrist ankle collarbone femur",fig:["splint-forearm", "splint-leg", "sling"],c:"trauma",u:"evac",n:"Broken bone (closed fracture)",
  s:"Pain, swelling, or deformity over a bone, with the skin intact. Splint it.",
  sg:["Pain directly over a bone, swelling, bruising.","Deformity, angulation, or grating.","Can't use the limb or bear weight."],
  tx:["Check circulation, sensation, and motion (CSM) beyond the injury.",
@@ -473,7 +514,7 @@ const CONDS = [
   "Thigh (femur) fracture: up to 2 liters of blood can collect in the thigh. Hold the leg still, splint it in place without pulling traction, and treat for shock. Improvised traction splints can cause harm."],
  ev:["All suspected fractures.","Rapid evacuation for femur or pelvis fractures, reduced CSM, or signs of shock."],
  rel:["open-fx","sprain","shock"]},
-{id:"overuse",c:"trauma",u:"field",n:"Tendinitis and overuse injuries",
+{id:"overuse",kw:"tendonitis tendinitis achilles shin splints knee pain it band plantar cramps",c:"trauma",u:"field",n:"Tendinitis and overuse injuries",
  s:"Gradual pain from repeated motion: Achilles, knee, shin, foot, wrist, or shoulder. Usually manageable by reducing load and fixing the cause.",
  sg:["Pain that builds over hours or days with a repeated activity, better with rest.","Tenderness and mild swelling along a tendon; sometimes a creaking feel when it moves.",
   "Common: Achilles (heel cord), front of knee or outside of knee (IT band), shins (shin splints), heel and arch (plantar fasciitis), wrist and forearm (paddling, poles), shoulder.",
@@ -485,7 +526,7 @@ const CONDS = [
   "Muscle cramps: stretch and massage the muscle, drink fluids with electrolytes."],
  ev:["Pinpoint bone pain, especially in the foot or shin (possible stress fracture).","Suspected Achilles rupture: splint with the toes pointed and evacuate.","Pain that keeps worsening despite reduced load, or they can't continue safely."],
  rel:["sprain","fracture"]},
-{id:"back",c:"trauma",u:"field",n:"Back pain and strain",
+{id:"back",kw:"lower back sciatica strain",c:"trauma",u:"field",n:"Back pain and strain",
  s:"Most back pain on a trip is muscle strain from lifting or carrying. A few red flags need evacuation.",
  lab:{sg:"Red flags"},
  sg:["After a fall or significant impact: treat as Possible spinal injury.","Numbness or weakness in the legs.",
@@ -496,7 +537,7 @@ const CONDS = [
   "Lift with legs, avoid twisting with a load, and share heavy carries."],
  ev:["Any red flag.","Can't carry a pack or walk after 24 hours of rest and treatment."],
  rel:["spine","urinary"]},
-{id:"open-fx",c:"trauma",u:"rapid",n:"Open fracture",
+{id:"open-fx",now:["Stop the bleeding.", "Rinse with clean water. Cover with a moist dressing.", "Splint. Rapid evacuation."],c:"trauma",u:"rapid",n:"Open fracture",
  s:"A broken bone with a wound over it. High infection risk.",
  sg:["Bone end visible, or a wound near a suspected fracture. Bone may have pulled back inside."],
  tx:["Control bleeding.",
@@ -506,7 +547,7 @@ const CONDS = [
   "Splint as for a closed fracture, leaving a window to check the wound."],
  ev:["Rapid evacuation. Needs antibiotics and surgery."],
  rel:["fracture","wound"]},
-{id:"disloc",fig:["sling", "shoulder-reduction"],c:"trauma",u:"evac",n:"Dislocation",
+{id:"disloc",kw:"shoulder out of socket popped out kneecap finger",fig:["sling", "shoulder-reduction"],c:"trauma",u:"evac",n:"Dislocation",
  s:"A joint out of place. Reduce only when strict conditions are met; otherwise splint and evacuate.",
  sg:["Obvious joint deformity, severe pain, loss of motion.",
   "Shoulder (front, over 90% of cases): arm held down and away from the body, squared-off shoulder, can't bring elbow to waist.","Kneecap: shifted to the outside, knee bent, won't straighten.","Finger: crooked and locked at a joint."],
@@ -522,7 +563,7 @@ const CONDS = [
  av:["Don't reduce a shoulder hurt by a direct blow or major force (a fracture may be present), or one dislocated toward the back.",
   "Don't reduce thumb joints, the finger joint at the knuckle, or open dislocations."],
  rel:["fracture"]},
-{id:"sprain",fig:["splint-leg"],c:"trauma",u:"field",n:"Sprain or strain",
+{id:"sprain",kw:"twisted ankle rolled ankle knee wrist",fig:["splint-leg"],c:"trauma",u:"field",n:"Sprain or strain",
  s:"Joint or muscle injury that can still bear weight without deformity.",
  sg:["Pain and swelling at a joint or muscle, bruising, maybe a pop at injury.","Can still use it or walk on it.","No deformity, no pain directly on bone."],
  tx:["RICES: Rest for 24–48 hours if possible, until it bears weight without pain and swelling is down.",
@@ -533,11 +574,11 @@ const CONDS = [
  ev:["Can't move on their own for more than 24 hours, or still can't bear weight.",
   "Pain directly on bone, unstable joint, or the limb doesn't work: treat as a fracture."],
  rel:["fracture"]},
-{id:"wound",c:"trauma",u:"field",n:"Cuts, scrapes, and wounds",
+{id:"wound",kw:"laceration cut gash scrape abrasion stitches tetanus",c:"trauma",u:"field",n:"Cuts, scrapes, and wounds",
  s:"Stop the bleeding, clean thoroughly, close only low-risk wounds, and watch for infection.",
  lab:{sg:"High-risk wounds (leave open, evacuate)"},
  sg:["Bites, deep punctures, crush injuries.","Grossly dirty wounds.","Gaping wounds, or exposed bone, tendon, joint, fat, or muscle.","Any wound in someone with diabetes or a weak immune system."],
- tx:["Stop significant bleeding with direct pressure. Light bleeding helps flush the wound.",
+ tx:["Stop significant bleeding with direct pressure. Light bleeding helps flush the wound. Scalp wounds bleed heavily; press firmly.",
   "Irrigate with at least 1 liter of drinkable water under pressure from an irrigation syringe, as soon as practical.",
   "Use plain water. Soap, iodine, peroxide, and similar additives damage tissue; the exception is a possible rabies exposure.",
   "Pick out debris with tweezers or gauze, and look closely for anything left.",
@@ -546,7 +587,7 @@ const CONDS = [
   "Cover with a slightly moist sterile dressing and a loose bandage. Antibiotic ointment is optional.",
   "Infected small wound: clean it, warm soaks 20 minutes three times a day, and immobilize."],
  ev:["Fever, chills, weakness, or signs of sepsis (confusion, fast breathing, fast pulse): rapid evacuation.",
-  "Infection spreading beyond the wound: redness, warmth, swelling, red streaks.","High-risk wounds, impaled objects, or wounds not improving."],
+  "Infection spreading beyond the wound: redness, warmth, swelling, red streaks.","High-risk wounds, impaled objects, or wounds not improving.","Dirty or deep wound and no tetanus shot in the past 5 years (10 for clean wounds): see a doctor within a couple of days."],
  rel:["bleeding","animal-bite"]},
 {id:"splinter",c:"trauma",u:"field",n:"Splinters and fishhooks",
  s:"Remove what you can grasp, clean well, and watch for infection.",
@@ -566,7 +607,17 @@ const CONDS = [
   "Ibuprofen per label."],
  ev:["Pain that could be a fracture: treat as a fracture.","Large bruising after a big impact, especially to the thigh, torso, or belly (hidden bleeding).","Bruising on someone taking blood thinners after any significant blow."],
  rel:["fracture","abd-trauma"]},
-{id:"impaled",c:"trauma",u:"rapid",n:"Impaled object",
+{id:"skin-infection",c:"trauma",u:"field",n:"Skin infection, boil, or abscess",
+ kw:"cellulitis pus boil abscess infected staph mrsa",
+ s:"Spreading redness (cellulitis) or a painful pus-filled lump. Mark it, warm it, and watch which way it's going.",
+ sg:["Cellulitis: red, warm, swollen, tender skin that spreads over hours to days.","Abscess or boil: a firm, painful lump that softens in the center, sometimes with a white head."],
+ tx:["Draw around the edge of the redness with a pen and write the time, so you can see if it spreads.",
+  "Warm compresses for 20 minutes, 3–4 times a day.","A boil may open and drain on its own. Let it, then wash and cover it. Don't squeeze hard or cut it open.",
+  "Keep it clean and covered. Rest and elevate the area.","Antibiotics if carried and prescribed."],
+ ev:["Redness spreading past your pen line, red streaks, fever, or swollen glands.","Infection on the face, hand, groin, or over a joint, or in someone with diabetes.","No improvement in 24–48 hours.",
+  "Severe pain out of proportion, purple or black skin, blisters, or confusion: rapid evacuation."],
+ rel:["wound","fever"]},
+{id:"impaled",now:["Leave it in.", "Pad around it and bandage it so it can't move."],c:"trauma",u:"rapid",n:"Impaled object",
  s:"Leave it in and stabilize it. Removing it can cause major bleeding.",
  tx:["Pad bulky material around the object and bandage it in place so it can't move.",
   "Shorten it only if needed for transport, and only without moving it.",
@@ -575,7 +626,33 @@ const CONDS = [
   "Object in the eye: never remove. Cover both eyes loosely so they don't move."],
  ev:["Rapid evacuation, unless small, shallow, and removed easily."],
  rel:["wound","eye"]},
-{id:"burn-minor",fig:["palms"],c:"trauma",u:"field",n:"Minor burn",
+{id:"penetrating",c:"trauma",u:"rapid",n:"Gunshot, stab, or arrow wound",
+ now:["Make the weapon safe.","Stop bleeding: pressure, tourniquet on a limb, pack armpit or groin wounds.","Find every wound, including exits. Check the back.","Chest wound: vented seal or leave open. Rapid evacuation."],
+ kw:"gunshot bullet shot hunting stab knife arrow broadhead penetrating",
+ s:"A small hole can hide major internal damage. Stop the bleeding, find every wound, and evacuate fast.",
+ sg:["Entry wound, and often a larger exit wound somewhere unexpected.","Internal bleeding: shock with little visible blood.","Chest: trouble breathing, bubbling wound. Belly: pain, rigidity."],
+ tx:["Make the scene safe: unload and secure firearms; move away from an attacker.",
+  "Limb: direct pressure; tourniquet if pressure fails. Armpit, groin, or neck: pack the wound and hold pressure.",
+  "Expose and check the whole body for more wounds, including the back, armpits, groin, and under hair.",
+  "Chest: cover with a vented chest seal, or leave open. Watch breathing closely.",
+  "Belly: don't pack. Cover with a moist dressing. Nothing by mouth.",
+  "Arrow, knife, or other object still in place: leave it in and pad around it (see Impaled object).",
+  "Lay flat, keep warm, treat for shock. Record the time and what caused the wound."],
+ ev:["Always. Rapid evacuation, even if the wound looks small."],
+ av:["Don't probe the wound or try to remove a bullet.","Spine precautions aren't needed for a penetrating wound alone."],
+ rel:["bleeding","chest-serious","eviscer","impaled","shock"]},
+{id:"eviscer",c:"trauma",u:"rapid",n:"Open belly wound (organs showing)",
+ now:["Don't push anything back in.","Cover with a moist, clean dressing, then plastic.","Lay flat, knees bent. Keep warm. Nothing by mouth."],
+ kw:"evisceration intestines guts bowel abdominal",
+ s:"Abdominal contents exposed through a wound. Keep them moist, covered, and warm.",
+ tx:["Control any heavy bleeding around the wound first.","Lay them on their back with knees bent, if the legs and pelvis aren't injured.",
+  "Rinse off obvious dirt with clean drinkable water.","Cover the organs with a large non-stick dressing moistened with clean water. Don't use anything that sticks or sheds, like paper towel.",
+  "Cover that with plastic wrap, a plastic bag, or a foil blanket to hold moisture and heat. Tape loosely.",
+  "Re-moisten the dressing during a long evacuation.","Treat for shock and keep them very warm. Nothing by mouth."],
+ ev:["Always. Rapid evacuation."],
+ av:["Don't push organs back in, and don't press on them."],
+ rel:["penetrating","abd-trauma","shock"]},
+{id:"burn-minor",kw:"scald burned",fig:["palms"],c:"trauma",u:"field",n:"Minor burn",
  s:"Sunburn-type burns, or small blistered burns smaller than the person's palm, away from the face, hands, feet, genitals, and joints.",
  sg:["Superficial: red, painful, no blisters.","Partial thickness: blisters (key sign), smaller than the person's palm."],
  tx:["Stop the burning and remove jewelry and smoldering clothing.","Cool with water. Up to 30 minutes helps pain, but watch for chilling.",
@@ -593,7 +670,7 @@ const CONDS = [
   "Keep them drinking until urine is clear and plentiful.","If evacuation will happen within 24 hours, don't change the dressings."],
  ev:["Evacuate. Rapid evacuation if it meets Serious burn criteria."],
  rel:["burn-serious","burn-minor"]},
-{id:"burn-serious",fig:["palms"],c:"trauma",u:"rapid",n:"Serious burn",
+{id:"burn-serious",now:["Stop the burning. Remove rings and tight items.", "Cool briefly, then cover and keep them warm.", "Watch their breathing. Rapid evacuation."],fig:["palms"],c:"trauma",u:"rapid",n:"Serious burn",
  s:"Large burns, deep burns larger than a palm, or any sign of an airway burn.",
  sg:["Blistered burns covering more than 9% of the body (about 9 palms).","Deep (full-thickness) burns larger than the person's palm.",
   "Airway: singed hair or soot at nose or mouth, hoarse voice or wheezing, gray-black cough, swelling at mouth or neck, shortness of breath.","Electrical burns, including lightning."],
@@ -604,7 +681,7 @@ const CONDS = [
   "Watch breathing closely. An airway burn can swell shut hours later."],
  ev:["Rapid evacuation."],
  rel:["burn-evac","burn-minor","hypo-mild"]},
-{id:"eye",c:"trauma",u:"field",n:"Eye injury or something in the eye",
+{id:"eye",kw:"scratch cornea something in eye",c:"trauma",u:"field",n:"Eye injury or something in the eye",
  s:"Flush loose debris. Anything stuck in or cutting the eye needs rapid evacuation.",
  tx:["Don't rub.","Flush with lots of clean water, pouring away from the uninjured eye.",
   "Check under the upper lid by flipping it over a swab. Lift loose specks with moist gauze.",
@@ -615,6 +692,24 @@ const CONDS = [
  ev:["Impaled object, or an eye that is misshapen or leaking: rapid evacuation.",
   "Object that won't come out, chemical or heat burn to the eye, vision changes, or pain worsening over 24 hours."],
  rel:["snowblind","impaled"]},
+{id:"red-eye",c:"trauma",u:"field",n:"Red or irritated eye (no injury)",
+ kw:"pink eye conjunctivitis stye contact lens itchy goopy",
+ s:"Usually pink eye, allergy, or a stye. A painful red eye in a contact lens wearer needs a doctor.",
+ sg:["Pink eye: red, gritty, watery or sticky discharge, lids crusted in the morning. Spreads easily.","Allergy: both eyes itchy and watery.","Stye: a tender red lump on the eyelid edge."],
+ tx:["Take out contact lenses and leave them out.","Wash hands often; don't share towels or pillows.","Rinse with clean water or saline. Wipe crusts with a clean damp cloth.",
+  "Stye: warm compresses for 10 minutes, several times a day. Don't squeeze it.","Allergy: cool compresses and an oral antihistamine.","Antibiotic eye drops if carried and prescribed."],
+ ev:["Real pain (more than irritation), light sensitivity, or blurred or lost vision.","Contact lens wearer with a painful red eye.","Not improving in 2–3 days."],
+ rel:["eye","snowblind"]},
+{id:"face",c:"trauma",u:"evac",n:"Broken nose, jaw, or facial injury",
+ kw:"nose jaw cheek facial fracture teeth",
+ s:"Airway first: blood, swelling, and loose teeth can block it. Then think head and neck injury.",
+ sg:["Nose: swelling, deformity, bleeding, trouble breathing through it.","Jaw: teeth don't meet normally, pain opening the mouth, numb lower lip.","Cheek or eye socket: flattened cheek, numb cheek, double vision, eye that won't look up."],
+ tx:["Sit them up, leaning forward, so blood drains out. Let them spit; don't have them swallow blood.","Check for head and spine injury.",
+  "Control bleeding with gentle pressure. Cold pack for swelling.","Broken jaw: support it with a loose bandage under the chin and over the head that can come off instantly if they vomit. Liquids and soft food only.",
+  "Save any knocked-out teeth (see Tooth injury)."],
+ ev:["Any suspected facial fracture.","Trouble breathing, bleeding you can't control, double vision or vision loss, or clear fluid from the nose: rapid evacuation."],
+ av:["Don't straighten a broken nose.","Don't blow the nose after a facial injury."],
+ rel:["nosebleed","dental","tbi"]},
 {id:"ear",c:"trauma",u:"field",n:"Ear injury, earache, or object in the ear or nose",
  s:"Clean outer ear cuts like any wound. Fluid draining from inside the ear after a blow can mean a head injury.",
  sg:["Blood or clear fluid from inside the ear, hearing loss, ringing, or severe pain.","Swimmer's ear: pain when the earlobe is pulled, itching, discharge, after swimming or getting water in the ear.","Middle ear infection: deep ache, often with a cold, maybe fever."],
@@ -636,7 +731,7 @@ const CONDS = [
   "Prevent: drink plenty, and a little petroleum jelly inside the nostrils in dry air."],
  ev:["Significant bleeding that's hard to control.","After a head injury.","Person takes blood thinners."],
  av:["Don't tilt the head back."]},
-{id:"dental",c:"trauma",u:"field",n:"Tooth injury or toothache",
+{id:"dental",kw:"tooth teeth toothache",c:"trauma",u:"field",n:"Tooth injury or toothache",
  s:"A knocked-out adult tooth has the best chance if it goes back in the socket right away.",
  tx:["After a blow to the face, consider head, jaw, and spine injury first, and watch the airway.",
   "Pick the tooth up by the crown (the white part), never the root.",
@@ -647,7 +742,7 @@ const CONDS = [
   "Bleeding: bite on a clean dressing, or a moist black or green tea bag for 20–30 minutes.",
   "Toothache without injury: gauze soaked in clove oil around the tooth."],
  ev:["Knocked-out or partly knocked-out teeth.","Significant bleeding, signs of infection (pain swallowing or opening the mouth, facial swelling, fever), or a major blow to the head."]},
-{id:"blisters",c:"trauma",u:"field",n:"Blisters",
+{id:"blisters",kw:"hot spot feet",c:"trauma",u:"field",n:"Blisters",
  s:"Treat hot spots early. Drain big blisters at the edge and keep the roof on.",
  tx:["Hot spot: stop and cover it now with tape, a blister dressing, or a donut pad.",
   "Blister smaller than about ¼ in (5 mm): leave it intact and protect it the same way.",
@@ -695,7 +790,7 @@ const CONDS = [
  tx:["Get out of wind and wet. Add dry layers and a hat.","High-calorie food and a warm, sweet drink.","Then move around or exercise to generate heat."],
  ev:["Getting clumsier, more confused, or apathetic: see Mild hypothermia."],
  rel:["hypo-mild"]},
-{id:"hypo-mild",fig:["hypowrap"],c:"env",u:"field",n:"Mild hypothermia",
+{id:"hypo-mild",kw:"cold shivering freezing",fig:["hypowrap"],c:"env",u:"field",n:"Mild hypothermia",
  s:"Shivering hard, still alert, but clumsy or making poor decisions. Rest, wrap, add heat and calories.",
  sg:["Vigorous shivering.","Alert, but irritable, apathetic, lethargic, or making poor decisions.","Clumsy, stumbling, poor fine motor skills (the “umbles”: stumbles, mumbles, fumbles, grumbles)."],
  tx:["Handle gently.","Have them sit or lie down for at least 30 minutes.",
@@ -706,7 +801,7 @@ const CONDS = [
   "After 30 minutes of rewarming and calories, an alert person who can stand may do light exercise."],
  ev:["No improvement after 30 minutes of rewarming and calories."],
  rel:["cold-stress","hypo-severe","frostbite"]},
-{id:"hypo-severe",fig:["hypowrap"],c:"env",u:"rapid",n:"Moderate to severe hypothermia",
+{id:"hypo-severe",kw:"cold not shivering freezing unresponsive",now:["Handle gently. Keep them lying flat.", "Wrap: pad under, insulation around, windproof layer outside.", "Heat on the chest and armpits. No food or drink if drowsy.", "No breathing or pulse after a 60-second check: CPR."],fig:["hypowrap"],c:"env",u:"rapid",n:"Moderate to severe hypothermia",
  s:"Cold with drowsiness, confusion, or shivering that has slowed or stopped. Handle gently, keep horizontal, wrap, and evacuate.",
  sg:["Moderate: drowsy or confused, poor movement, shivering intermittent or stopped, slowing pulse and breathing.",
   "Severe: barely responsive or unresponsive, no shivering, very slow pulse and breathing, dilated pupils. May appear dead.",
@@ -730,7 +825,7 @@ const CONDS = [
  tx:["Don't pull or tug.","Pour warm (not hot) water over the stuck skin and the metal, or breathe warm air on it.","Ease the skin free as it releases.","Treat any torn skin as an open wound."],
  ev:["Large torn areas, or a tongue or lip injury that bleeds heavily or keeps them from eating and drinking."],
  rel:["frostnip","wound"]},
-{id:"frostbite",c:"env",u:"evac",n:"Frostbite",
+{id:"frostbite",kw:"frozen fingers toes",c:"env",u:"evac",n:"Frostbite",
  s:"Frozen tissue. Rewarm shallow frostbite. Leave deep frostbite frozen unless evacuation will take many hours or days.",
  sg:["Superficial: pale, numb skin that is still pliable. Clear blisters reaching the fingertips after rewarming.",
   "Deep (full thickness): hard, white, waxy, numb, sometimes burgundy. Dark, blood-filled blisters that don't reach the tips appear later, or none."],
@@ -763,7 +858,7 @@ const CONDS = [
   "After a faint, do a full head-to-toe check and vital signs, and ask exactly what happened."],
  ev:["Fainting that repeats, or with no clear heat-related explanation."],
  rel:["heat-exhaustion","heatstroke","faint"]},
-{id:"heat-exhaustion",c:"env",u:"field",n:"Heat exhaustion",
+{id:"heat-exhaustion",kw:"overheated hot tired",c:"env",u:"field",n:"Heat exhaustion",
  s:"Overheated and depleted, but thinking clearly. Lie flat, cool, rest, and replace fluid and salt.",
  sg:["Fatigue, weakness, headache, dizziness, nausea, intense thirst.","Fast, weak pulse; fast breathing.","Pale, clammy skin with heavy sweating, or flushed.","Normal mental status. Core temperature below 104 °F (40 °C) if measured."],
  tx:["Lay them flat or in the recovery position.","Move to shade. Remove extra layers and insulate from hot ground.",
@@ -772,7 +867,7 @@ const CONDS = [
   "Rest at least 1–2 hours, and up to 12–24 hours depending on how they respond.","Keep checking vital signs."],
  ev:["Any confusion or odd behavior: treat as heat stroke.","Not resolving with treatment, or can't keep fluids down for 24 hours."],
  rel:["heatstroke","heat-minor","hyponatremia"]},
-{id:"heatstroke",c:"env",u:"rapid",n:"Exertional heat stroke",
+{id:"heatstroke",kw:"overheated hot collapse sunstroke",now:["Cool now: into cold water up to the neck, head held up.", "No water to get into: soak them and fan hard.", "Keep cooling until their thinking clears. Then evacuate."],c:"env",u:"rapid",n:"Exertional heat stroke",
  s:"Altered mental status during or after exertion in heat. Cool the whole body immediately, within 30 minutes, then evacuate.",
  sg:["Confusion, agitation, irrational behavior, collapse, seizure, or unresponsiveness. May collapse with no warning.",
   "During or after exertion, usually in warm weather but possible in cool weather.",
@@ -801,7 +896,7 @@ const CONDS = [
   "Confused, seizing, or struggling to breathe: nothing by mouth, protect the airway, rapid evacuation."],
  ev:["Altered responsiveness, seizure, other nerve problems, or breathing trouble: rapid evacuation.","Mild and improving with salt and rest: continued observation may be enough."],
  rel:["heatstroke","heat-exhaustion","dehydration"]},
-{id:"dehydration",c:"env",u:"field",n:"Dehydration",
+{id:"dehydration",kw:"thirsty dry",c:"env",u:"field",n:"Dehydration",
  s:"Not enough fluid. Rehydrate slowly with some salt and sugar.",
  sg:["Thirst, infrequent dark yellow urine, dry lips and eyes.","Headache, fatigue, irritability, poor decisions.","Dizziness or fainting when standing up."],
  tx:["Reduce activity. In sun and heat, shade and cool them.",
@@ -810,7 +905,7 @@ const CONDS = [
   "Simple, easy-to-tolerate food.","Prevent: drink often (4–6 liters a day in heat), and no more than 10 liters in 24 hours."],
  ev:["Can't rehydrate them over 24–48 hours.","Signs of shock."],
  rel:["heat-exhaustion","gi"]},
-{id:"ams",fig:["heel-toe"],c:"env",u:"field",n:"Acute mountain sickness (AMS)",
+{id:"ams",kw:"altitude sickness mountain sickness",fig:["heel-toe"],c:"env",u:"field",n:"Acute mountain sickness (AMS)",
  s:"Headache and feeling unwell after gaining altitude. Don't go higher until it clears.",
  sg:["Usually above about 8,000 ft (2,500 m), sometimes as low as 6,500 ft (2,000 m). Starts 6–12 hours after arrival, but can be 1 hour to 4 days.",
   "Headache plus one or more: poor appetite, nausea, vomiting, fatigue, weakness, dizziness, lightheadedness.",
@@ -822,7 +917,7 @@ const CONDS = [
  ev:["Mild AMS that worsens or doesn't improve in 1–2 days: descend.","Ataxia, confusion, or breathlessness at rest (HACE or HAPE): descend now."],
  av:["Never go higher with symptoms.","Don't send anyone with altitude illness down alone.","Rule out carbon monoxide if a stove ran in the tent or shelter."],
  rel:["hace","hape","co"]},
-{id:"hace",fig:["heel-toe"],c:"env",u:"rapid",n:"High altitude cerebral edema (HACE)",
+{id:"hace",kw:"altitude brain swelling ataxia",now:["Descend now, at least 1,000 ft. Never alone.", "Dexamethasone and oxygen if you have them."],fig:["heel-toe"],c:"env",u:"rapid",n:"High altitude cerebral edema (HACE)",
  s:"Brain swelling at altitude. Descend immediately.",
  sg:["Often follows worsening AMS, but not always.","Loss of coordination: can't walk a straight heel-to-toe line.","Confusion, altered behavior, extreme drowsiness, decreasing responsiveness.","Rare below 10,000 ft (3,000 m). Can progress to unresponsiveness in under 3 hours."],
  tx:["Descend now, day or night, until symptoms improve or resolve, usually 1,000–3,300 ft (300–1,000 m). Never alone; they may need help or carrying.",
@@ -831,7 +926,7 @@ const CONDS = [
   "A portable hyperbaric bag can save a life if descent is impossible, but must not delay descent."],
  ev:["Rapid evacuation."],
  rel:["ams","hape"]},
-{id:"hape",c:"env",u:"rapid",n:"High altitude pulmonary edema (HAPE)",
+{id:"hape",kw:"altitude lungs breathless",now:["Descend at least 3,300 ft with as little effort as possible.", "Keep them warm and sitting upright.", "Oxygen and nifedipine if you have them."],c:"env",u:"rapid",n:"High altitude pulmonary edema (HAPE)",
  s:"Fluid in the lungs at altitude, the most common cause of death from altitude illness. Descend and minimize exertion.",
  sg:["Breathless at rest (the key sign; breathlessness with exertion is normal at altitude).","Much weaker and slower than others at the same altitude.","Cough becoming wet; crackling in the chest; worse lying flat.","Blue lips, fast pulse and breathing, low-grade fever.","Pink, frothy sputum (late and ominous).","Can occur without AMS."],
  tx:["Descend at least 3,300 ft (1,000 m), or until relief, with as little exertion as possible: carry them, use a vehicle, animal, or helicopter, and rest often.",
@@ -840,17 +935,18 @@ const CONDS = [
   "Portable hyperbaric bag if descent is delayed."],
  ev:["Rapid evacuation."],
  rel:["ams","hace"]},
-{id:"lightning",c:"env",u:"rapid",n:"Lightning strike",
+{id:"lightning",now:["They're safe to touch. Treat those who look dead first.", "Not breathing: rescue breaths and CPR.", "Move everyone to a safer spot if the storm continues."],c:"env",u:"rapid",n:"Lightning strike",
  s:"Victims don't hold a charge. Treat those who look dead first; they may only need breathing support.",
  tx:["Make sure you're safe; the storm may still be active.",
   "Touch them right away. Lightning victims don't carry a charge.",
   "With several victims, treat the ones who appear dead first. They may be in breathing arrest and survive with rescue breathing.",
   "Rescue breathing or CPR as needed. Breathing support may be needed for a long time.",
   "Check for burns, fractures and spine injury from being thrown, ruptured eardrums, and eye injury. Temporary limb paralysis usually resolves.",
-  "Suspect hypothermia; a strike can disrupt temperature control. Keep them warm."],
+  "Suspect hypothermia; a strike can disrupt temperature control. Keep them warm.",
+  "Storm still active: get off ridges and away from tall trees and water, spread the group 20–40 ft (6–12 m) apart, and crouch on a pad with feet together."],
  ev:["Rapid evacuation for anyone struck, even if they seem fine."],
  rel:["cpr","burn-serious","spine"]},
-{id:"drowning",c:"env",u:"rapid",n:"Drowning",
+{id:"drowning",kw:"submersion underwater river",now:["Don't go in after them. Reach or throw.", "Not breathing: 5 rescue breaths, then CPR.", "Treat for hypothermia."],c:"env",u:"rapid",n:"Drowning",
  s:"Breathing first. Anyone who struggled to breathe after being in the water needs evacuation.",
  tx:["Hello, reach, throw, row, go, helicopter. Enter the water only if trained and equipped.",
   "Remove from the water, horizontally if it was cold.",
@@ -862,7 +958,7 @@ const CONDS = [
   "Breathing trouble any time in the next 24 hours, persistent cough, or foamy sputum.",
   "Weak pulses, ongoing fast heart rate, or existing heart or lung disease."],
  rel:["cpr","hypo-severe"]},
-{id:"avalanche",fig:["hypowrap"],c:"env",u:"rapid",n:"Avalanche burial",
+{id:"avalanche",now:["Dig to the face and chest first. Clear the mouth and nose.", "Not breathing: rescue breaths, then CPR.", "Handle gently and insulate from the snow."],fig:["hypowrap"],c:"env",u:"rapid",n:"Avalanche burial",
  s:"Speed of the dig matters most. Then airway, breathing, hypothermia, and injuries.",
  tx:["Watch for further slides. Turn transceivers to search, probe, and dig from downhill toward the victim.",
   "Expose the face and chest first. Clear the mouth and nose, and note whether there was an air pocket and whether the airway was packed with snow.",
@@ -874,6 +970,29 @@ const CONDS = [
  av:["Resuscitation is less likely to succeed after burial over an hour with the airway packed with snow, or with injuries incompatible with life. Follow your training and medical direction."],
  lab:{av:"Note"},
  rel:["cpr","hypo-severe","spine"]},
+{id:"cold-water",c:"env",u:"field",n:"Cold water immersion (fell in, through ice)",
+ now:["In the water: don't panic. Float and control your breathing for 1 minute.","Then get out or grab something within 10 minutes.","Out: wet clothes off, dry layers on, shelter, warm drink."],
+ kw:"fell through ice river lake capsize cold shock swim",
+ s:"Cold shock and swim failure kill before hypothermia does. Remember 1–10–1.",
+ sg:["1 minute: gasping and fast breathing (cold shock). Keep your airway clear and get your breathing under control.",
+  "10 minutes: of useful movement before arms and legs stop working. Use them to get out.","1 hour: before unconsciousness from hypothermia, if you're floating with a life jacket."],
+ lab:{sg:"1–10–1"},
+ tx:["Through ice: turn back toward where you came from. Arms on the ice, kick hard to get horizontal, pull and roll onto the ice. Roll or crawl away; don't stand.",
+  "Can't get out: stop struggling, keep as much of your body out of the water as you can, and let sleeves freeze to the ice so you stay up.",
+  "Rescuers: reach or throw from solid ground. Don't go onto the ice or into the water.","Lift them out as flat as possible and handle gently.",
+  "Get out of the wind. Replace wet clothes with dry insulation, or wrap them as they are if shelter is under 30 minutes away.","Warm sweet drinks and food if fully alert. Then treat by hypothermia stage."],
+ ev:["In the water 30 minutes or more: treat as moderate hypothermia and evacuate.","Any breathing trouble or cough afterward (see Drowning).","Not rewarming within 30 minutes."],
+ rel:["hypo-mild","hypo-severe","drowning"]},
+{id:"suspension",c:"env",u:"rapid",n:"Hanging in a harness (suspension trauma)",
+ now:["Get them moving their legs or standing in a sling.","Get them down fast.","Down: lay flat, check breathing, treat for shock."],
+ kw:"harness climbing rope rappel hanging suspension",
+ s:"Hanging motionless in a harness pools blood in the legs. Fainting can come within minutes and death soon after.",
+ sg:["Hanging still after a fall, injury, or exhaustion.","Faint, dizzy, sweaty, nauseated, pale, numb legs, then unresponsive."],
+ tx:["While hanging: have them pump their legs, push off the rock, or stand in a foot loop or sling. Raise the knees if they can't.",
+  "Lower or raise them as fast as is safe.","Once down, lay them flat. Check airway and breathing; start CPR if needed.",
+  "Check for injuries from the fall. Treat for shock and keep warm.","After a long hang, watch for dark urine (see Rhabdomyolysis)."],
+ ev:["Any fainting or unresponsiveness, or hanging motionless more than a few minutes: rapid evacuation."],
+ rel:["shock","rhabdo","spine"]},
 {id:"snowblind",c:"env",u:"field",n:"Snow blindness",
  s:"Sunburned eyes. Painful, but heals in a day or two.",
  sg:["6–12 hours after sun on snow, water, or at altitude.","Gritty, painful, red, watery eyes; pain moving the eyes; light sensitivity."],
@@ -893,7 +1012,7 @@ const CONDS = [
   "Treat chemical burns like other burns afterward."],
  ev:["Chemical in the eye with continuing pain or vision changes, or large or deep skin burns.","Breathing trouble after inhaling a chemical or bear spray: rapid evacuation."],
  rel:["eye","burn-evac","poison"]},
-{id:"co",c:"env",u:"evac",n:"Carbon monoxide poisoning",
+{id:"co",now:["Get everyone out into fresh air.", "Air out the space before going back in.", "Not breathing: CPR."],c:"env",u:"evac",n:"Carbon monoxide poisoning",
  s:"Odorless gas from stoves, heaters, and engines in enclosed spaces. Get everyone into fresh air.",
  sg:["A stove, heater, lantern, or engine used in a tent, vestibule, snow cave, cabin, or vehicle.",
   "Headache, dizziness, confusion, drowsiness, progressing to unresponsiveness and breathing arrest.",
@@ -905,7 +1024,7 @@ const CONDS = [
  ev:["Evacuate anyone suspected of carbon monoxide poisoning.","Any change in responsiveness: rapid evacuation."],
  av:["Never run a stove inside a closed tent or snow cave, however efficient it is."],
  rel:["ams","altered"]},
-{id:"smoke",c:"env",u:"evac",n:"Smoke inhalation",
+{id:"smoke",now:["Move to clean air.", "Sit upright. Watch breathing.", "Hoarse voice or noisy breathing: rapid evacuation."],c:"env",u:"evac",n:"Smoke inhalation",
  s:"Wildfire or campfire smoke irritates the airways and can carry carbon monoxide. Airway burn signs mean rapid evacuation.",
  sg:["Cough, wheezing, sore throat, shortness of breath, watery eyes.",
   "Airway burn signs: hoarse voice, noisy or high-pitched breathing, soot in the nose or mouth, singed facial hair, swelling of the mouth or throat.",
@@ -925,7 +1044,7 @@ const CONDS = [
   "Large local swelling, even past a joint, isn't anaphylaxis. Elevate and cool."],
  ev:["Any sign of anaphylaxis: rapid evacuation.","Dozens of stings, or a sting inside the mouth or throat."],
  rel:["anaphylaxis","allergic-mild"]},
-{id:"snakebite",fig:["snakebite-mark"],c:"bite",u:"rapid",n:"Snakebite (rattlesnake / pit viper)",
+{id:"snakebite",kw:"rattlesnake viper venom",now:["Get away from the snake.", "Remove rings and anything tight. Keep the limb still, at heart level.", "Go now: get to a hospital with antivenom.", "No cutting, sucking, ice, or tourniquet."],fig:["snakebite-mark"],c:"bite",u:"rapid",n:"Snakebite (rattlesnake / pit viper)",
  s:"Rest, reassure, rapid evacuation. Nothing in the field changes the outcome as much as getting to antivenom.",
  sg:["Fang marks, pain, swelling spreading from the bite, blisters, oozing.","Metallic taste, numbness, tingling.","Severe: shock, breathing trouble, unresponsiveness.","Some bites inject no venom, but treat every bite as if it did."],
  tx:["Get everyone away from the snake. Detached heads and dead snakes can still bite.",
@@ -938,7 +1057,7 @@ const CONDS = [
  ev:["Rapid evacuation to a hospital that can give antivenom, which may not be the nearest one."],
  av:["No cutting, suction, tourniquet, ice, water immersion, or electric shock.","No pressure bandages or pressure-immobilization wraps.",
   "No ibuprofen, aspirin, naproxen, or alcohol.","Don't bring the snake, dead or alive."]},
-{id:"tick",fig:["tick-removal"],c:"bite",u:"field",n:"Tick bite",
+{id:"tick",kw:"lyme rocky mountain spotted fever",fig:["tick-removal"],c:"bite",u:"field",n:"Tick bite",
  s:"Remove it cleanly and watch for illness over the coming weeks.",
  tx:["Grasp with fine-tipped tweezers as close to the skin as possible. Pull gently and steadily; direction doesn't matter.",
   "Clean the bite and watch it for infection. Note the date and where you were.",
@@ -960,7 +1079,32 @@ const CONDS = [
  tx:["Keep the person calm.","Clean the wound and give good wound care.","Treat anaphylaxis if it occurs.","Cold compress and pain medication per label."],
  ev:["Any muscle spasms after a black widow bite, even local ones.","Pain, tissue damage, infection, or body-wide symptoms."],
  rel:["wound"]},
-{id:"animal-bite",c:"bite",u:"evac",n:"Mammal bite or bat contact (rabies risk)",
+{id:"scorpion",c:"bite",u:"field",n:"Scorpion sting",
+ kw:"scorpion bark desert",
+ s:"Most stings only hurt. The bark scorpion of the desert Southwest can cause nerve symptoms, especially in children.",
+ sg:["Sharp pain, tingling, or numbness at the sting; little swelling.","Bark scorpion: numbness spreading up the limb, muscle twitching, roving eyes, drooling, slurred speech, trouble swallowing or breathing."],
+ tx:["Wash the area. Cold pack for pain.","Pain reliever per label.","Keep them calm and still, and watch for 4 hours."],
+ ev:["Any symptoms beyond the sting site, especially in a child: rapid evacuation.","Signs of anaphylaxis."],
+ rel:["anaphylaxis","sting"]},
+{id:"insect-bites",c:"bite",u:"field",n:"Mosquito, fly, ant, and chigger bites; leeches",
+ kw:"mosquito black fly horsefly ant chigger no-see-um leech itchy bites bug",
+ s:"Itchy and annoying, rarely dangerous. Don't scratch them open.",
+ tx:["Wash with soap and water.","Cold compress, hydrocortisone cream, or an oral antihistamine for itch.","Fire ant pustules: leave them intact.",
+  "Leech: slide a fingernail or card under the narrow end, then the wide end, and flick it off. Wash the bite; oozing for a while is normal.",
+  "Prevent: long sleeves, head net, repellent with DEET or picaridin on skin, permethrin on clothing."],
+ ev:["Signs of infection from scratching.","Fever, bad headache, stiff neck, or rash in the days to weeks after bites.","Signs of anaphylaxis: rapid evacuation."],
+ rel:["sting","allergic-mild","skin-infection"]},
+{id:"animal-attack",c:"bite",u:"rapid",n:"Bear or large animal attack",
+ now:["Get the group together and away from the animal. Bear spray ready.","Stop the bleeding.","Check the whole body: scalp, neck, chest, belly, back."],
+ kw:"bear grizzly moose cougar mountain lion elk bison mauled gored trampled",
+ s:"Expect several deep wounds plus hidden blunt injuries. Treat as major trauma, then as a high-risk bite.",
+ sg:["Deep cuts and punctures, often to the scalp, face, neck, and arms.","Crushing and blunt injuries: broken ribs, belly injuries, fractures, spine injury.","Shock."],
+ tx:["Scene safety first. Leave the area as a group as soon as the patient can be moved.","Control bleeding: pressure, tourniquet, wound packing. Scalp wounds bleed heavily; press firmly.",
+  "Check airway and breathing; face and neck wounds can block the airway.","Do a full head-to-toe exam for hidden injuries.",
+  "Once bleeding is controlled, wash wounds thoroughly with lots of water. Don't close them.","Treat for shock and keep warm."],
+ ev:["Rapid evacuation for anything more than minor wounds.","All bites and scratches that break the skin need medical care for infection and rabies risk."],
+ rel:["bleeding","animal-bite","shock","spine"]},
+{id:"animal-bite",kw:"dog bite bat rabies raccoon",c:"bite",u:"evac",n:"Mammal bite or bat contact (rabies risk)",
  s:"Clean it immediately and thoroughly. Rabies is preventable if shots start early.",
  tx:["Control bleeding.",
   "Wash with soap and water, then irrigate with lots of water and a virucide such as povidone-iodine if you have it. Repeat. This is the one wound where soap and iodine are recommended.",
@@ -969,7 +1113,7 @@ const CONDS = [
   "High rabies risk: bats, raccoons, skunks, foxes, and any wild mammal acting strangely. Any contact with a bat counts, including waking with a bat in the tent."],
  ev:["All mammal bites that break the skin, and any bat contact, to a facility that can start rabies shots promptly. Once rabies symptoms appear, it is almost always fatal."],
  rel:["wound"]},
-{id:"plant-rash",c:"bite",u:"field",n:"Plant rash (poison ivy, nettle)",
+{id:"plant-rash",kw:"poison ivy oak sumac nettle itchy",c:"bite",u:"field",n:"Plant rash (poison ivy, nettle)",
  s:"Wash the oil off fast. It binds to skin within about an hour.",
  sg:["Poison ivy, oak, or sumac: red, itchy, burning rash with blisters, usually 24–48 hours after contact.","Stinging nettle: immediate burning and raised bumps that fade within hours."],
  tx:["Wash skin as soon as possible with cold water and soap, or a cleanser made for urushiol (Tecnu and similar). After about 60 minutes, little will wash off.",
@@ -995,18 +1139,18 @@ const CONDS = [
  rel:["anaphylaxis"]},
 
 /* ---------- ILLNESS ---------- */
-{id:"cardiac",c:"med",u:"rapid",n:"Chest pain (possible heart attack)",
+{id:"cardiac",kw:"heart attack chest pressure angina",now:["Stop all activity. Rest half-sitting.", "Chew 324 mg aspirin, unless allergic.", "Send for help. Be ready to start CPR."],c:"med",u:"rapid",n:"Chest pain (possible heart attack)",
  s:"Treat chest pressure as cardiac. Minimize exertion and get out fast, carried or flown.",
  sg:["Pressure, squeezing, or pain in the chest lasting more than 3–5 minutes, not relieved by rest or changing position, and not worse when pressing on the chest wall.",
   "May spread to arms, jaw, neck, or between the shoulder blades.","Shortness of breath, sweating, nausea, pale skin, weakness, dizziness, fainting, anxiety or denial.",
   "Women, older adults, and diabetics often have softer signs: fatigue, nausea, mild discomfort that comes and goes. This person usually looks sick."],
  tx:["Stop all exertion and reduce anxiety. Let them choose a comfortable position, usually half-sitting.",
-  "Aspirin: suggest they chew 324 mg of non-coated aspirin (four 81 mg or one 325 mg), unless allergic, recently bleeding, or told by a doctor to avoid it. Don't repeat the dose, and don't substitute acetaminophen or ibuprofen.",
+  "Aspirin: have them chew 324 mg of non-coated aspirin (four 81 mg or one 325 mg), unless allergic, recently bleeding, or told by a doctor to avoid it. Don't repeat the dose, and don't substitute acetaminophen or ibuprofen.",
   "Help them take their own nitroglycerin if prescribed, under the tongue, unless they've taken an erectile dysfunction drug in the past 24–48 hours (dangerous drop in blood pressure).",
   "Keep warm and calm. Prepare for CPR and an AED."],
  ev:["Rapid evacuation with as little movement or exertion as possible. Consider helicopter."],
  rel:["cpr","breathing-unclear"]},
-{id:"asthma",c:"med",u:"evac",n:"Asthma attack",
+{id:"asthma",kw:"inhaler wheeze albuterol",now:["Sit them upright.", "Rescue inhaler now, with a spacer if they have one.", "Not improving: send for help."],c:"med",u:"evac",n:"Asthma attack",
  s:"Help them use their inhaler. Severe attacks are life-threatening.",
  sg:["Wheezing, mostly on breathing out; long, effortful exhales.","Coughing, chest tightness, fast heart rate and breathing.",
   "Severe: tripod position, straining neck muscles, can't speak full sentences, dusky or blue skin, anxiety then drowsiness."],
@@ -1016,7 +1160,7 @@ const CONDS = [
   "Life-threatening attack not responding to the inhaler: epinephrine may be carefully considered by trained responders."],
  ev:["Prolonged or severe attacks: rapid evacuation.","Needing the inhaler much more often, or more frequent attacks."],
  rel:["anaphylaxis","breathing-unclear"]},
-{id:"hypoglycemia",c:"med",u:"field",n:"Diabetic emergency (low or high blood sugar)",
+{id:"hypoglycemia",kw:"diabetes diabetic insulin sugar",now:["Awake and able to swallow: sugar now (juice, candy, glucose tabs).", "Can't swallow: lay on their side, rub sugar paste inside the cheek.", "Recheck in 10–15 minutes."],c:"med",u:"field",n:"Diabetic emergency (low or high blood sugar)",
  s:"A diabetic with a sudden change in behavior or responsiveness. First aid is the same for low and high: when in doubt, give sugar.",
  sg:["Low blood sugar (most emergencies, comes on fast): shaky, sweaty, cool skin, pale, hungry, headache, irritable or aggressive, blank stare, acting drunk, seizures, unresponsiveness. Often after a change in routine, extra exercise, missed food, or vomiting.",
   "High blood sugar (develops over hours to days): very thirsty, urinating often, tired, nausea or vomiting, fruity breath, deep fast breathing, drowsiness. Often after missed insulin, illness, or lost or frozen supplies.",
@@ -1031,7 +1175,7 @@ const CONDS = [
   "Suspected high blood sugar: evacuate; it needs insulin and medical care.","Can't manage blood sugar with routine changes, insulin or supplies lost, or the cause is unclear."],
  av:["Never give insulin."],
  rel:["altered","seizure"]},
-{id:"seizure",fig:["recovery"],c:"med",u:"evac",n:"Seizure",
+{id:"seizure",kw:"convulsion fit epilepsy shaking",now:["Move hazards away and cushion the head. Don't hold them down. Nothing in the mouth.", "Time it.", "Afterward: roll onto their side and check breathing."],fig:["recovery"],c:"med",u:"evac",n:"Seizure",
  s:"Protect them from injury, time it, and look for a cause.",
  sg:["Sudden jerking or stiffening, loss of awareness.","Drooling, loss of bladder control.","Drowsy and confused for minutes to an hour afterward."],
  tx:["Move hazards away and cushion the head. Don't hold them down or put anything in the mouth.",
@@ -1040,7 +1184,7 @@ const CONDS = [
  ev:["Rapid evacuation for a first-ever seizure, one over 5 minutes, back-to-back seizures, injury, pregnancy, diabetes, not returning to normal, or a cause like trauma, heat, or altitude.",
   "Known epilepsy with a typical seizure and full recovery may not need evacuation. Decide together with the person."],
  rel:["hypoglycemia","tbi","heatstroke","hyponatremia","hace"]},
-{id:"stroke",c:"med",u:"rapid",n:"Stroke",
+{id:"stroke",now:["Note the time symptoms started.", "Nothing by mouth. Head and shoulders slightly raised.", "Rapid evacuation."],c:"med",u:"rapid",n:"Stroke",
  s:"Sudden one-sided weakness, slurred speech, or vision loss. Note the time it started.",
  sg:["BE FAST: Balance loss, Eyes (vision loss), Face droop or uneven smile, Arm drift or weakness on one side, Speech slurred or confused, Time to evacuate.","Sudden severe headache."],
  tx:["Note the exact time symptoms started. Treatment options depend on it.",
@@ -1050,7 +1194,7 @@ const CONDS = [
   "Check for mimics: low blood sugar, HACE at altitude, and carbon monoxide."],
  ev:["Rapid evacuation."],
  rel:["hypoglycemia","hace","co"]},
-{id:"abdominal",c:"med",u:"field",n:"Abdominal pain",
+{id:"abdominal",kw:"stomach ache belly pain appendicitis appendix",c:"med",u:"field",n:"Abdominal pain",
  s:"Most belly aches pass. Think “sick or not sick,” and evacuate for red flags.",
  lab:{sg:"Red flags"},
  sg:["Significant pain lasting more than 8 hours, or sudden, severe pain.","Pain after abdominal trauma.",
@@ -1062,7 +1206,7 @@ const CONDS = [
   "Burning urination, blood in urine, or back or side pain: see Urinary problems."],
  ev:["Any red flag. Sudden severe pain: immediate evacuation."],
  rel:["gi","urinary","shock"]},
-{id:"gi",c:"med",u:"field",n:"Diarrhea and vomiting",
+{id:"gi",kw:"puke throwing up stomach bug food poisoning giardia runs traveler's diarrhea",c:"med",u:"field",n:"Diarrhea and vomiting",
  s:"Rehydrate in small, frequent sips and tighten up hygiene.",
  tx:["Clear fluids, sports drinks, or oral rehydration solution in small amounts. If tolerated for 12–24 hours, add simple foods.",
   "Rest. Limit caffeine.",
@@ -1072,7 +1216,7 @@ const CONDS = [
  ev:["Fever, vomiting, or diarrhea lasting more than 24 hours, especially with signs of dehydration.","Blood in stool or vomit.",
   "Can't keep fluids down for 24 hours.","Signs of sepsis or shock. Lower threshold for children."],
  rel:["dehydration","abdominal"]},
-{id:"faint",c:"med",u:"field",n:"Fainting",
+{id:"faint",kw:"passed out blacked out syncope dizzy",c:"med",u:"field",n:"Fainting",
  s:"A brief blackout with fast recovery once lying flat. Look for the cause and check for injuries from the fall.",
  sg:["Lightheaded, sweaty, or tunnel vision just before.","Brief loss of consciousness, fully alert again soon after lying flat.",
   "Common triggers: standing a long time, heat, dehydration, pain, the sight of blood."],
@@ -1091,7 +1235,7 @@ const CONDS = [
   "Fever reducer (acetaminophen or ibuprofen) only by the dose on the child product's label for their weight."],
  ev:["First febrile seizure, a seizure over 5 minutes or repeated, not waking normally, breathing trouble, stiff neck, a rash, or a child under 6 months: rapid evacuation.","All febrile seizures should be evaluated by a doctor."],
  rel:["seizure","fever"]},
-{id:"opioid",fig:["recovery"],c:"med",u:"rapid",n:"Opioid overdose",
+{id:"opioid",kw:"overdose fentanyl heroin narcan pills",now:["Naloxone spray in one nostril now.", "Not breathing: CPR with rescue breaths.", "No response in 2–5 minutes: another dose."],fig:["recovery"],c:"med",u:"rapid",n:"Opioid overdose",
  s:"Slow or stopped breathing with pinpoint pupils. Give naloxone and support breathing.",
  sg:["Very slow, shallow, snoring, or stopped breathing.","Unresponsive or very hard to wake.","Pinpoint pupils.","Blue or gray lips and fingertips; clammy skin.",
   "Clues: pain pills, patches, needles, a history of use. Street drugs may contain fentanyl."],
@@ -1105,7 +1249,7 @@ const CONDS = [
  ev:["Rapid evacuation for anyone who needed naloxone, even if they recover."],
  av:["Naloxone doesn't reverse alcohol, sedatives, or other drugs, but give it anyway if opioids are possible."],
  rel:["cpr","alcohol","altered"]},
-{id:"alcohol",fig:["recovery"],c:"med",u:"rapid",n:"Alcohol poisoning",
+{id:"alcohol",now:["Lay them on their side. Never leave them alone.", "Check breathing often. Keep them warm."],fig:["recovery"],c:"med",u:"rapid",n:"Alcohol poisoning",
  s:"Too much alcohol can stop breathing, cause choking on vomit, and drop body temperature. Never leave them alone.",
  sg:["Confusion, vomiting, very hard to wake or unresponsive.","Slow or irregular breathing.","Cold, pale, or bluish skin (hypothermia).","Seizures."],
  tx:["Recovery position to protect the airway; don't let them lie on their back.","Stay with them and check breathing regularly.",
@@ -1113,7 +1257,7 @@ const CONDS = [
   "Look for other problems: head injury from a fall, low blood sugar, hypothermia, other drugs. If opioids are possible, give naloxone."],
  ev:["Can't be woken, slow or irregular breathing, a seizure, vomiting while drowsy, or an injury: rapid evacuation."],
  rel:["opioid","hypo-mild","altered"]},
-{id:"poison",c:"med",u:"evac",n:"Swallowed poison (plants, mushrooms, medication, fuel)",
+{id:"poison",kw:"mushroom overdose pills ate plant hemlock",now:["Don't make them vomit.", "Poison Control (US): 1-800-222-1222.", "Keep the container or a sample."],c:"med",u:"evac",n:"Swallowed poison (plants, mushrooms, medication, fuel)",
  s:"Find out what and how much, don't induce vomiting, and get advice. Wild mushrooms with delayed vomiting can be deadly.",
  sg:["Open container, leftover plant or mushroom, or a report of what they ate.","Burns around the mouth, drooling, burning in the mouth or throat.",
   "Nausea, vomiting, diarrhea, cramps, dizziness, drowsiness, seizures, unresponsiveness.",
@@ -1129,7 +1273,7 @@ const CONDS = [
   "Medication overdose, or fuel swallowed with any coughing: evacuate."],
  av:["Don't eat wild mushrooms unless an expert has identified them."],
  rel:["altered","chemical","alcohol","opioid"]},
-{id:"rhabdo",c:"med",u:"evac",n:"Rhabdomyolysis (muscle breakdown)",
+{id:"rhabdo",now:["Stop all exertion. Rest and cool down.", "Drink fluids with electrolytes if alert.", "No ibuprofen. Dark urine: rapid evacuation."],c:"med",u:"evac",n:"Rhabdomyolysis (muscle breakdown)",
  s:"Damaged muscle releases proteins that can shut down the kidneys. Severe muscle pain with dark urine after extreme exertion, a crush, or long immobility means rapid evacuation.",
  sg:["Triggers: extreme or unaccustomed exertion (long descents, heavy loads, first hard days), especially in heat or when dehydrated; a crush or long entrapment; lying immobile for hours after a fall, hypothermia, or intoxication; heat stroke; some drugs and supplements.",
   "Muscle pain, tenderness, swelling, or weakness far beyond normal soreness, often in the thighs, calves, back, or shoulders.",
@@ -1152,7 +1296,7 @@ const CONDS = [
  ev:["Doesn't settle within a few minutes, chest pain, decreasing responsiveness, or any suspicion of another cause."],
  av:["Don't have them breathe into a paper bag."],
  rel:["breathing-unclear","psych","asthma"]},
-{id:"fever",c:"med",u:"field",n:"Fever",
+{id:"fever",kw:"temperature chills infection sepsis meningitis",c:"med",u:"field",n:"Fever",
  s:"Usually an infection the body can fight. Some combinations of fever and other signs need fast evacuation.",
  lab:{sg:"Red flags"},
  sg:["Stiff neck, severe headache, confusion, or a purple or pinpoint rash that doesn't fade when pressed: rapid evacuation.",
@@ -1163,7 +1307,7 @@ const CONDS = [
   "Recheck temperature and vital signs every few hours."],
  ev:["Any red flag.","Not improving after 24 hours, or getting weaker."],
  rel:["respiratory","wound","tick","urinary","febrile-seizure"]},
-{id:"respiratory",c:"med",u:"field",n:"Colds, sore throat, and chest infections",
+{id:"respiratory",kw:"cold flu cough pneumonia strep bronchitis",c:"med",u:"field",n:"Colds, sore throat, and chest infections",
  s:"Most are viral and run their course. Watch for pneumonia, throat abscess, and, at altitude, HAPE.",
  sg:["Runny nose, sore throat, mild cough, low energy: a cold.",
   "Fever with a productive cough, chest pain on breathing, or shortness of breath: possible pneumonia.",
@@ -1172,7 +1316,7 @@ const CONDS = [
  tx:["Rest, warm fluids, and extra calories.","Throat lozenges or warm salt-water gargles.","Acetaminophen or ibuprofen per label.","Keep the sick person's cup, utensils, and food separate."],
  ev:["Shortness of breath, trouble swallowing, drooling, or a high fever: rapid evacuation.","Fever with a productive cough, or symptoms worsening after 2–3 days."],
  rel:["hape","fever","asthma"]},
-{id:"headache",c:"med",u:"field",n:"Headache",
+{id:"headache",kw:"migraine head hurts",c:"med",u:"field",n:"Headache",
  s:"Usually dehydration, sun, hunger, poor sleep, or caffeine withdrawal. Look for the dangerous causes first.",
  lab:{sg:"Red flags"},
  sg:["Sudden, severe, worst-ever headache: rapid evacuation (possible bleeding in the brain).","After a head injury, or with confusion, weakness, slurred speech, or vision changes.",
@@ -1183,10 +1327,124 @@ const CONDS = [
 {id:"constipation",c:"med",u:"field",n:"Constipation",
  s:"Common with trip food, dehydration, and reluctance to use a cathole. Usually fixed with fluids and fiber.",
  sg:["Fewer bowel movements than usual, hard stools, bloating, cramping, urge without results."],
- tx:["Drink more water. Eat fruit, dried fruit, oatmeal, and other fiber.","Coffee or other caffeine, and walking, help get things moving.","Make time and privacy for a regular bathroom routine.","A stool softener or laxative per label if carried."],
+ tx:["Drink more water. Eat fruit, dried fruit, oatmeal, and other fiber.","Coffee or other caffeine, and walking, help get things moving.","Make time and privacy for a regular bathroom routine.","A stool softener or laxative per label if carried.","Hemorrhoids: keep clean, pat dry, cool compress, avoid straining. A little bright red blood on the paper is common."],
  ev:["Severe or constant belly pain, a swollen belly, vomiting, or no gas passing: see Abdominal pain and evacuate."],
  rel:["abdominal","dehydration"]},
-{id:"urinary",c:"med",u:"field",n:"Urinary problems (blood in urine, UTI, kidney stone)",
+{id:"meds",c:"ref",u:null,n:"Medications and adult doses",
+ kw:"dose dosage ibuprofen advil tylenol acetaminophen benadryl imodium aspirin pepto pills how much",
+ s:"Standard adult label doses for common first aid kit medications. Ask about allergies first. For children, use the weight chart on the children's product.",
+ lab:{sg:"Over the counter (adults)",tx:"Prescription only: for the person they were prescribed to, or under protocols",av:"Cautions"},
+ sg:["Ibuprofen (Advil, Motrin): 400 mg every 6 hours with food. Maximum 1,200 mg in 24 hours.",
+  "Acetaminophen (Tylenol): 500–1,000 mg every 6 hours. Maximum 3,000 mg in 24 hours.",
+  "Aspirin: for suspected heart attack only, chew 324 mg once (four 81 mg tablets).",
+  "Diphenhydramine (Benadryl): 25–50 mg every 4–6 hours. Causes drowsiness.",
+  "Loperamide (Imodium): 4 mg, then 2 mg after each loose stool. Maximum 8 mg in 24 hours.",
+  "Bismuth (Pepto-Bismol): 2 tablets or 30 ml every 30–60 minutes as needed, up to 8 doses in 24 hours. Turns stool and tongue black.",
+  "Famotidine (Pepcid): 10–20 mg up to twice a day for heartburn. Antacid tablets per label.",
+  "Hydrocortisone 1% cream: thin layer on itchy rashes up to 4 times a day. Antibiotic ointment: thin layer on cleaned minor wounds.",
+  "Glucose tablets or gel: 15–20 g for low blood sugar.",
+  "Naloxone nasal spray: one spray in one nostril; repeat with a new device every 2–5 minutes if needed."],
+ tx:["Epinephrine auto-injector: 0.3 mg adult, 0.15 mg child up to about 66 lb (30 kg), outer thigh. May repeat in 5–15 minutes.",
+  "Albuterol inhaler: 2 puffs, with a spacer if possible; follow the person's own action plan during an attack.",
+  "Acetazolamide (Diamox): 125 mg twice a day to prevent AMS; 250 mg twice a day to treat it.",
+  "Dexamethasone for HACE: 8 mg once, then 4 mg every 6 hours, while descending.",
+  "Nifedipine extended-release for HAPE: 30 mg every 12 hours, while descending.",
+  "Ondansetron (Zofran) for vomiting: 4 mg dissolved on the tongue every 4–6 hours."],
+ av:["Ibuprofen and other NSAIDs: not with dehydration, heat stroke, rhabdomyolysis, kidney disease, stomach ulcers or bleeding, blood thinners, snakebite, or late pregnancy.",
+  "Acetaminophen: less with liver disease or heavy drinking. Many cold medicines already contain it.",
+  "Aspirin and bismuth: not for children or teens, or with aspirin allergy.","Loperamide: not with fever or bloody stool.",
+  "Don't combine sedating drugs, and don't give anything by mouth to someone who can't swallow safely.","Record every dose and the time you gave it."],
+ rel:["kit","anaphylaxis","ams"]},
+{id:"kit",c:"ref",u:null,n:"First aid kit checklist",
+ kw:"supplies gear pack list",
+ s:"Scale it to group size, trip length, and distance from help. Know how to use everything in it.",
+ lab:{sg:"Core kit",tx:"Medications",av:"Also carry"},
+ sg:["Nitrile gloves, CPR face shield.","Tourniquet, hemostatic or plain packing gauze, pressure bandage or elastic wrap.",
+  "Gauze pads and roll, non-stick dressings, adhesive bandages, wound closure strips, medical tape.","Irrigation syringe, tweezers, trauma shears, safety pins.",
+  "SAM splint, triangular bandage, athletic or Leukotape.","Blister care: moleskin, blister dressings, benzoin.",
+  "Emergency blanket or bivy, chemical heat packs.","Thermometer, marker, pencil and paper for notes."],
+ tx:["Ibuprofen, acetaminophen, aspirin (chewable).","Diphenhydramine, hydrocortisone cream, antibiotic ointment.","Loperamide, antacid, oral rehydration salts or electrolyte mix.",
+  "Glucose tablets or gel.","Personal prescriptions: epinephrine, inhaler, altitude medications, antibiotics, as prescribed. Naloxone if anyone carries opioids."],
+ av:["Satellite messenger or PLB, whistle, signal mirror, headlamp.","Power bank and cable for the phone carrying this guide.","Water treatment, fire starter, extra insulation, tarp."],
+ rel:["meds","water","survival"]},
+{id:"water",c:"ref",u:null,n:"Water disinfection",
+ kw:"purify filter boil bleach iodine giardia drinking",
+ s:"Treat all backcountry water. Boiling kills everything; filters and chemicals each have gaps.",
+ lab:{tx:"Methods",av:"Also"},
+ tx:["Boil: a rolling boil for 1 minute; 3 minutes above 6,500 ft (2,000 m).",
+  "Filter (0.2 micron or smaller): removes bacteria and parasites like Giardia, but not viruses. Follow with chemical treatment where human waste is likely.",
+  "Chlorine dioxide tablets or drops: per the label, usually 30 minutes; allow 4 hours to kill Cryptosporidium.",
+  "Unscented household bleach (5–9%): 2 drops per liter or quart of clear water, 4 if cloudy or very cold. Mix and wait 30 minutes; it should smell faintly of chlorine.",
+  "Iodine: per the label. Not for pregnancy, thyroid disease, or long-term use, and weak against Cryptosporidium.",
+  "UV pen: per the device, in clear water only.","Cloudy water: let it settle and strain through cloth before treating."],
+ av:["Wash hands before handling food and after toileting; most backcountry gut illness spreads by hands."],
+ rel:["gi","dehydration"]},
+{id:"carry",c:"ref",u:null,n:"Moving and carrying a patient",
+ kw:"litter stretcher carry drag evacuate move lift",
+ s:"Move someone only as far as needed for safety and care, unless you've decided to evacuate. Carries are slow and exhausting.",
+ lab:{tx:"Options",av:"Before you commit"},
+ tx:["Emergency drag (immediate danger): grab clothing at the shoulders, cradle the head between your forearms, and pull along the line of the body.",
+  "Walking assist: their arm over your shoulder, your arm around their waist, on the injured side.",
+  "Piggyback or pack-strap carry: for a light, alert patient without spine, pelvis, or leg injuries.",
+  "Two-person seat: rescuers grip each other's wrists under the thighs and behind the back.",
+  "Improvised litter: tarp or blanket rolled around two poles, a rope litter, or zipped jackets with sleeves pulled inside over poles. Pad it and tie the patient in. Test with an uninjured person first.",
+  "Carrying a litter: 6 carriers at a time, patient's feet downhill, one person watching the patient's face and airway. Rotate often."],
+ av:["A litter carry needs 15–20 people and covers about 1 mile an hour on good trail. With a small group, sending for help is usually faster and safer.",
+  "Possible spine, pelvis, or thigh injury: wait for a rescue team unless staying is more dangerous.","Keep the patient warm, padded, and protected from weather the whole way."],
+ rel:["evacuation","lz","spine"]},
+{id:"lz",c:"ref",u:null,n:"Signaling and helicopter landing zone",
+ kw:"helicopter landing zone signal whistle mirror rescue sos",
+ s:"Make yourself easy to find, and prepare a safe place for a helicopter.",
+ lab:{sg:"Signaling",tx:"Landing zone",av:"Around the helicopter"},
+ sg:["Three of anything means distress: 3 whistle blasts, 3 light flashes, 3 fires.","Signal mirror or phone screen flashed toward aircraft. Bright clothing or a tarp spread in the open.",
+  "At night: headlamp on strobe; don't shine it at the pilot on approach.","Stay where you said you'd be. Keep the phone and messenger warm and on low power."],
+ tx:["Flat, firm, open ground about 100 × 100 ft (30 × 30 m), with clear approach paths and no wires, snags, or tall trees.",
+  "Remove or tie down everything loose: tarps, sleeping pads, hats.","Mark wind direction: stand at the upwind edge with your back to the wind and arms pointing forward, or hang a strip of cloth.",
+  "Keep everyone else well back, with eyes protected, and the patient shielded and warm."],
+ av:["Approach only when the crew signals, from the front where the pilot can see you, crouched.","Never walk near the tail, and never approach from the uphill side.","Carry gear low, never over your shoulder."],
+ rel:["evacuation","carry"]},
+{id:"mci",c:"ref",u:null,n:"Several patients at once (triage)",
+ kw:"triage multiple casualties mass start",
+ s:"Do the most good for the most people. Sort everyone fast, treat the worst first, then go back and reassess.",
+ lab:{tx:"Quick sort, 30 seconds each",av:"Exceptions"},
+ tx:["Make the scene safe and count patients. Send for help early with the number and types of injuries.",
+  "Anyone who can walk: send them to one safe spot (delayed, minor). Use them as helpers.",
+  "Not breathing: open the airway. Still not breathing: move on. Starts breathing: immediate.",
+  "Immediate: breathing over 30 a minute, no pulse at the wrist, severe bleeding, or can't follow simple commands.",
+  "Delayed: can't walk, but breathing, has a wrist pulse, and follows commands.",
+  "Only stop during the sort to open an airway or control severe bleeding. Then return to treat immediates first."],
+ av:["Lightning strike: reverse it. Treat those who aren't breathing first; they often respond to rescue breaths.","Cold-water drowning and hypothermia: attempt resuscitation if resources allow."],
+ rel:["primary","lightning","evacuation"]},
+{id:"survival",c:"ref",u:null,n:"Lost, stranded, or an unplanned night out",
+ kw:"lost stranded bivouac shelter fire survival night",
+ s:"Stop, think, and stay put if people know your plan. Protect against cold first, then water, then signal.",
+ lab:{tx:"Priorities"},
+ tx:["STOP: Stop, Think, Observe, Plan. Sit down, eat and drink something, and calm the group.",
+  "If lost and someone knows your route, stay where you are. Move only to reach safety or a place where you can be seen.",
+  "Shelter before dark: out of wind and water, off the ground on packs, ropes, or branches. Put on every layer before you get cold.",
+  "Share warmth and shelter. Fire if it's safe.","Water matters more than food. Treat it if you can; drink it anyway if the alternative is serious dehydration.",
+  "Signal: SOS on a messenger, 3 whistle blasts, bright items in the open.","Ration phone battery: airplane mode, low brightness, kept warm."],
+ rel:["lz","hypo-mild","water"]},
+{id:"death",c:"ref",u:null,n:"A death in the backcountry",
+ kw:"died dead body fatality",
+ s:"Protect the living first. Then notify authorities and document.",
+ tx:["Make sure the rest of the group is safe, warm, fed, and not alone.","Note the time, location (coordinates), what happened, and what care was given.",
+  "Notify authorities as soon as you can: 911 or SOS. In the US the county sheriff or coroner takes charge.",
+  "Don't move the body or belongings unless needed for safety or to keep it from being lost. If you must, photograph and mark the spot first.",
+  "Cover the body and mark the location so it can be found.","Expect strong reactions in the group, including your own. Stay together and get out safely."],
+ rel:["cpr","stress","evacuation"]},
+{id:"stress",c:"ref",u:null,n:"Stress reactions and psychological first aid",
+ kw:"shock trauma stress panic debrief psychological",
+ s:"Calm, connection, and simple tasks help patients, bystanders, and rescuers during and after a serious incident.",
+ lab:{tx:"What helps",ev:"Get professional help if"},
+ tx:["Introduce yourself, get to their eye level, speak slowly, and say what you're going to do before you do it.",
+  "Be honest. Don't promise outcomes you can't control.","Meet basic needs: warmth, water, food, shelter, and not being left alone.",
+  "Give upset bystanders a simple job.","Slow breathing: in for 4, hold for 4, out for 4, hold for 4.",
+  "Afterward: eat, sleep, and talk with the group about what happened when people are ready. Don't force it.",
+  "Shaking, crying, numbness, replaying events, and trouble sleeping are normal for days to weeks."],
+ ev:["Reactions lasting more than a month, or getting in the way of daily life.","Any thoughts of suicide: call or text 988 (US)."],
+ rel:["psych","hyperventilation","death"]},
+{id:"urinary",kw:"pee urine bladder uti kidney stone",c:"med",u:"field",n:"Urinary problems (blood in urine, UTI, kidney stone)",
  s:"Burning, frequent urination, or blood or dark color in the urine. Most is infection, but some causes need fast evacuation.",
  lab:{sg:"Likely causes"},
  sg:["Bladder infection (UTI): burning, frequent or urgent urination with little coming out; urine may be cloudy, pink, or bloody.",
@@ -1196,6 +1454,7 @@ const CONDS = [
   "Muscle breakdown: dark cola- or tea-colored urine after extreme exertion, a crush, heat illness, or lying immobile. See Rhabdomyolysis."],
  tx:["Drink steadily to keep urine flowing, unless they can't keep fluids down or a kidney injury is suspected.",
   "UTI: antibiotics if carried and prescribed for this. Urinate often and keep clean.",
+  "Vaginal itching with thick white discharge (yeast): keep the area dry, change out of wet clothing, and use antifungal cream if carried.",
   "Kidney stone: position of comfort, fluids, pain medication per label.",
   "Possible kidney injury: treat as an abdominal injury. Lay flat, keep warm, nothing by mouth, watch for shock.",
   "Note urine color, amount, and how often they urinate, and pass it on to rescuers."],
@@ -1210,7 +1469,36 @@ const CONDS = [
  tx:["Comfort care and monitoring of breathing.",
   "Prevent: air out closed buildings, wear a mask and gloves, wet droppings with 10% bleach before cleaning, and never sweep or vacuum them dry."],
  ev:["Evacuate anyone with suspected hantavirus. Breathing trouble: rapid evacuation."]},
-{id:"psych",c:"med",u:"evac",n:"Psychological crisis",
+{id:"pregnancy",c:"med",u:"evac",n:"Pregnancy problems and vaginal bleeding",
+ kw:"pregnant miscarriage ectopic period bleeding labor birth baby contractions",
+ s:"Belly pain or bleeding in anyone who could be pregnant is an emergency until proven otherwise.",
+ lab:{sg:"Red flags: rapid evacuation"},
+ sg:["Early pregnancy or a missed period with lower belly pain (often one-sided), shoulder-tip pain, dizziness, or fainting: possible ectopic pregnancy with internal bleeding.",
+  "Bleeding that soaks a pad an hour, or any bleeding with dizziness or signs of shock.","Later pregnancy: any bleeding, severe headache, vision changes, sudden swelling of face and hands, seizure, constant belly pain, fluid leaking, regular contractions, or a blow to the belly."],
+ tx:["Lay them down; on the left side in later pregnancy. Treat for shock and keep warm.","Count pads to track bleeding. Save any tissue passed for the doctor.",
+  "Fluids if alert and not vomiting. Nothing by mouth with severe pain or shock.","Cramping and bleeding in the first months may be a miscarriage; it still needs medical care.",
+  "Birth about to happen (urge to push, head visible): clean hands, support the head as it comes, don't pull. Dry the baby, place it skin-to-skin on the chest, and cover both. Leave the cord alone. The placenta follows on its own; if bleeding is heavy afterward, rub the lower belly firmly and put the baby to the breast."],
+ ev:["Any pregnancy with pain or bleeding: evacuate. Red flags: rapid evacuation.","Heavy bleeding when not pregnant: soaking a pad an hour for 2 hours, or with dizziness."],
+ rel:["abdominal","shock","seizure"]},
+{id:"groin",c:"med",u:"evac",n:"Testicle or groin pain, hernia",
+ kw:"testicular torsion testicle scrotum hernia bulge groin",
+ s:"Sudden, severe pain in one testicle is torsion until proven otherwise and needs surgery within hours.",
+ sg:["Torsion: sudden severe pain in one testicle, swelling, nausea or vomiting; the testicle may sit high or sideways. Most common in teens and young adults.",
+  "Infection: pain building over a day or more, often with burning urination or fever.","Hernia: a bulge in the groin that grows with coughing or lifting and shrinks lying down.",
+  "Trapped hernia: bulge turns firm, very painful, won't go back in, with nausea or vomiting."],
+ tx:["Support the scrotum with snug underwear or padding. Cold pack wrapped in cloth.","Pain reliever per label.",
+  "Hernia: lie back with knees bent and let it ease back in with gentle pressure. Avoid lifting and straining.","After a blow: pain should ease within an hour."],
+ ev:["Sudden severe testicle pain, or a hernia that is painful and won't go back in: rapid evacuation.","Pain lasting over an hour after a blow, swelling, fever, or a new hernia."],
+ rel:["urinary","abdominal"]},
+{id:"clot",c:"med",u:"evac",n:"Leg clot (DVT) and clot in the lung",
+ kw:"dvt pulmonary embolism pe blood clot calf swollen leg",
+ s:"One swollen, painful calf can be a clot. If part of it travels to the lung, it causes sudden breathlessness and chest pain.",
+ sg:["Leg clot: one calf or leg swollen, aching, warm, sometimes red. Risk goes up after long drives or flights, a leg injury or splint, dehydration, birth control pills, or pregnancy.",
+  "Lung clot: sudden shortness of breath, sharp chest pain on breathing in, fast pulse, coughing blood, fainting."],
+ tx:["Leg clot: don't massage the leg. Keep them drinking, avoid hard exertion, and evacuate.","Lung clot: stop all exertion, sit them upright, give oxygen if available, and be ready for CPR."],
+ ev:["Suspected leg clot: evacuate.","Any breathing trouble or chest pain: rapid evacuation, carried."],
+ rel:["breathing-unclear","cardiac"]},
+{id:"psych",kw:"suicide suicidal panic anxiety mental health crisis",c:"med",u:"evac",n:"Psychological crisis",
  s:"Severe distress, panic, or a person who isn't safe. Stay with them and get help.",
  sg:["Panic, severe agitation, withdrawal, or behavior that puts them or others at risk.","Any talk of suicide or wanting to die."],
  tx:["Check for medical causes first: head injury, low blood sugar, hypothermia, heat, altitude, carbon monoxide, drugs or alcohol.",
@@ -1282,6 +1570,7 @@ const TREE = {
   {l:"Bite, sting, or plant contact",to:"bite"},
   {l:"Illness or symptoms with no injury",to:"i1"},
   {l:"Poisoning, overdose, alcohol, smoke, or fumes",to:"po1"},
+  {l:"Minor problem: skin, eyes, ears, teeth, aches",to:"m1"},
   {l:"Not sure",to:"ns1"}]},
  ns1:{p:"What happened",q:"Was there any injury: a fall, impact, cut, or burn?",yes:{to:"h1"},no:{to:"ns2"}},
  ns2:{p:"What happened",q:"Were they exposed to cold, heat, high altitude, water, smoke, an avalanche, or lightning?",yes:{to:"env"},no:{to:"ns2b"}},
@@ -1318,48 +1607,59 @@ const TREE = {
   yes:{to:"l1",add:["crush"]},no:{to:"l1"}},
  l1:{p:"Injury survey",q:"Pain, swelling, or deformity in an arm, leg, or joint?",yes:{to:"l2"},no:{to:"w1"}},
  l2:{p:"Injury survey",q:"Is a bone end visible, or is there a wound over the injury?",
-  yes:{to:"w1",add:["open-fx"]},no:{to:"l3"}},
+  yes:{to:"cs1",add:["open-fx"]},no:{to:"l3"}},
  l3:{p:"Injury survey",q:"Does a joint look out of place: shoulder, kneecap, finger, or toe?",
-  yes:{to:"w1",add:["disloc"]},no:{to:"l4"}},
+  yes:{to:"cs1",add:["disloc"]},no:{to:"l4"}},
  l4:{p:"Injury survey",q:"Is there deformity, pain directly on the bone, or can they not take 4 steps or use the limb?",
-  yes:{to:"w1",add:["fracture"]},no:{to:"w1",add:["sprain"]}},
+  yes:{to:"cs1",add:["fracture"]},no:{to:"cs1",add:["sprain"]}},
+ cs1:{p:"Injury survey",q:"Is the limb pain severe and getting worse, far beyond what the injury explains, with tight, hard swelling or numbness?",
+  yes:{to:"w1",add:["compartment"]},no:{to:"w1"}},
  w1:{p:"Injury survey",q:"Is there a cut, wound, or scrape?",yes:{to:"w2"},no:{to:"b1"}},
- w2:{p:"Injury survey",q:"Is an object stuck in the wound?",
-  yes:{to:"b1",add:["impaled"]},no:{to:"b1",add:["wound"]}},
+ w2:{p:"Injury survey",q:"What kind of wound?",opts:[
+  {l:"Cut, scrape, or tear",to:"b1",add:["wound"]},
+  {l:"Object stuck in the wound",to:"b1",add:["impaled"]},
+  {l:"Gunshot, stab, or arrow wound",to:"b1",add:["penetrating"]},
+  {l:"Belly wound with organs showing",to:"b1",add:["eviscer"]},
+  {l:"Animal bite or mauling",to:"b1",add:["animal-attack","animal-bite"]}]},
  b1:{p:"Injury survey",q:"Any burns?",yes:{to:"b2"},no:{to:"m1"}},
  b2:{p:"Injury survey",q:"Any airway signs (singed nose hair, soot at the mouth, hoarse voice, wheezing), blistered burns over about 9 palms, or a deep burn larger than one palm?",
   h:"Their own palm is about 1% of the body. Deep burns look white, leathery, or charred and may not hurt.",
   yes:{to:"m1",add:["burn-serious"]},no:{to:"b3"}},
  b3:{p:"Injury survey",q:"Is any blistered burn larger than their palm, any deep burn, or a burn on the face, hands, feet, genitals, a joint, or wrapping around a limb?",
   yes:{to:"m1",add:["burn-evac"]},no:{to:"m1",add:["burn-minor"]}},
- m1:{p:"Injury survey",q:"Any smaller problems?",opts:[
-  {l:"Eyes, ears, nose, or teeth",to:"mh"},
-  {l:"Skin: blisters, chafing, rash, splinter, bruise, sunburn, toenail",to:"ms"},
+ m1:{p:"Smaller problems",q:"Any smaller problems? Pick one at a time.",opts:[
+  {l:"Eyes, ears, nose, face, or teeth",to:"mh"},
+  {l:"Skin: blisters, chafing, rash, infection, splinter, bruise, sunburn, toenail",to:"ms"},
   {l:"Muscles, tendons, joints, or back from overuse or strain",to:"mm"},
-  {l:"None of these"}]},
+  {l:"None, or done"}]},
  mh:{p:"Smaller problems",q:"Which one?",opts:[
-  {l:"Eye injury or something in the eye",add:["eye"]},
-  {l:"Nosebleed",add:["nosebleed"]},
-  {l:"Ear injury, earache, or something in the ear or nose",add:["ear"]},
-  {l:"Tooth knocked out, broken, or aching",add:["dental"]}]},
+  {l:"Eye injury or something in the eye",to:"m1",add:["eye"]},
+  {l:"Red, itchy, or sticky eye without injury",to:"m1",add:["red-eye"]},
+  {l:"Nosebleed",to:"m1",add:["nosebleed"]},
+  {l:"Broken nose, jaw, or other facial injury",to:"m1",add:["face"]},
+  {l:"Ear injury, earache, or something in the ear or nose",to:"m1",add:["ear"]},
+  {l:"Tooth knocked out, broken, or aching",to:"m1",add:["dental"]}]},
  ms:{p:"Smaller problems",q:"Which one?",opts:[
-  {l:"Blisters or hot spots",add:["blisters"]},
-  {l:"Chafing or saddle sores",add:["chafing"]},
-  {l:"Itchy, scaly rash between toes or in the groin",add:["fungal"]},
-  {l:"Splinter or fishhook",add:["splinter"]},
-  {l:"Bruise",add:["bruise"]},
-  {l:"Sunburn",add:["sunburn"]},
-  {l:"Black or ingrown toenail",add:["toenail"]},
-  {l:"Skin stuck to cold metal",add:["metal"]}]},
+  {l:"Blisters or hot spots",to:"m1",add:["blisters"]},
+  {l:"Chafing or saddle sores",to:"m1",add:["chafing"]},
+  {l:"Red, warm, swollen skin, or a boil",to:"m1",add:["skin-infection"]},
+  {l:"Itchy, scaly rash between toes or in the groin",to:"m1",add:["fungal"]},
+  {l:"Splinter or fishhook",to:"m1",add:["splinter"]},
+  {l:"Bruise",to:"m1",add:["bruise"]},
+  {l:"Sunburn",to:"m1",add:["sunburn"]},
+  {l:"Black or ingrown toenail",to:"m1",add:["toenail"]},
+  {l:"Skin stuck to cold metal",to:"m1",add:["metal"]}]},
  mm:{p:"Smaller problems",q:"Which one?",opts:[
-  {l:"Gradual pain from repeated motion (tendon, shin, knee, heel, wrist)",add:["overuse"]},
-  {l:"Back pain or strain",add:["back"]},
-  {l:"Muscle cramps",add:["overuse"]}]},
+  {l:"Gradual pain from repeated motion (tendon, shin, knee, heel, wrist)",to:"m1",add:["overuse"]},
+  {l:"Back pain or strain",to:"m1",add:["back"]},
+  {l:"Muscle cramps",to:"m1",add:["overuse"]}]},
  env:{p:"Environment",q:"Which fits best?",opts:[
   {l:"Cold or wet",to:"co1"},
   {l:"Hot weather or hard exertion",to:"he1"},
   {l:"High altitude",to:"al1"},
   {l:"Was underwater",to:"wq",add:["drowning"]},
+  {l:"Fell into cold water or through ice",to:"wq",add:["cold-water"]},
+  {l:"Hung motionless in a climbing harness",add:["suspension"]},
   {l:"Stove, heater, or engine in a tent or closed space",add:["co"]},
   {l:"Smoke from a wildfire or campfire",add:["smoke"]},
   {l:"Buried in an avalanche",to:"co1",add:["avalanche"]},
@@ -1402,6 +1702,9 @@ const TREE = {
   {l:"Snake",add:["snakebite"]},
   {l:"Tick",to:"tk1"},
   {l:"Spider",add:["spider"]},
+  {l:"Scorpion",add:["scorpion"]},
+  {l:"Mosquitoes, flies, ants, chiggers, or a leech",add:["insect-bites"]},
+  {l:"Bear or other large animal attack",to:"h1",add:["animal-attack"]},
   {l:"Mammal bite or scratch, or bat contact",add:["animal-bite","wound"]},
   {l:"Plant rash or stinging plant",add:["plant-rash"]},
   {l:"Plant sap, then sun (wild parsnip, giant hogweed, cow parsnip)",add:["phototoxic"]}]},
@@ -1421,8 +1724,10 @@ const TREE = {
  i5:{p:"Illness",q:"Are they confused, very drowsy, or acting abnormally?",yes:{to:"uop",add:["altered"]},no:{to:"i6"}},
  i6:{p:"Illness",q:"Did they faint or briefly pass out?",yes:{to:"i7",add:["faint"]},no:{to:"i7"}},
  i7:{p:"Illness",q:"Belly pain?",yes:{to:"i8"},no:{to:"i9"}},
- i8:{p:"Illness",q:"Any red flags: significant pain over 8 hours or sudden severe pain, pain in one spot (especially lower right), rigid or swollen belly, pain that limits walking or eating, fever, blood in vomit, stool, or urine, or possible pregnancy?",
-  yes:{to:"i9",add:["abdominal"],esc:{abdominal:"rapid"}},no:{to:"i9",add:["abdominal"]}},
+ i8:{p:"Illness",q:"Any belly red flags?",h:"Pain over 8 hours or sudden and severe. Pain in one spot, especially lower right. Rigid or swollen belly. Pain that limits walking or eating. Fever. Blood in vomit, stool, or urine.",
+  yes:{to:"pg1",add:["abdominal"],esc:{abdominal:"rapid"}},no:{to:"pg1",add:["abdominal"]}},
+ pg1:{p:"Illness",q:"Could they be pregnant, or is there vaginal bleeding heavier than a normal period?",
+  yes:{to:"i9",add:["pregnancy"],esc:{pregnancy:"rapid"}},no:{to:"i9"}},
  i9:{p:"Illness",q:"Diarrhea or vomiting?",yes:{to:"i10"},no:{to:"u1"}},
  i10:{p:"Illness",q:"Lasting more than 24 hours, fever, blood in stool or vomit, unable to keep fluids down, or getting weaker?",
   yes:{to:"u1",add:["gi"],esc:{gi:"evac"}},no:{to:"u1",add:["gi"]}},
@@ -1435,15 +1740,18 @@ const TREE = {
   yes:{to:"iox",add:["urinary"],esc:{urinary:"evac"}},no:{to:"iox",add:["urinary"]}},
  r1:{p:"Illness",q:"Severe muscle pain, swelling, or weakness far beyond normal soreness, after extreme exertion, a crush, or lying immobile?",
   yes:{to:"iox",add:["rhabdo"]},no:{to:"iox"}},
- iox:{p:"Illness",q:"Any of these other problems?",opts:[
-  {l:"Fever",to:"i13",add:["fever"]},
-  {l:"Cough, sore throat, or cold symptoms",to:"i13",add:["respiratory"]},
-  {l:"Headache",to:"i13",add:["headache"]},
-  {l:"Constipation",to:"i13",add:["constipation"]},
-  {l:"Itchy rash or hives after a food, medication, or plant",to:"i13",add:["allergic-mild"]},
-  {l:"Fever, aches, or cough after exposure to mouse droppings",to:"i13",add:["hantavirus"]},
-  {l:"Fast breathing with tingling hands during panic",to:"i13",add:["hyperventilation"]},
-  {l:"None of these",to:"i13"}]},
+ iox:{p:"Illness",q:"Any other problems? Pick one at a time.",opts:[
+  {l:"Fever",to:"iox",add:["fever"]},
+  {l:"Cough, sore throat, or cold symptoms",to:"iox",add:["respiratory"]},
+  {l:"Headache",to:"iox",add:["headache"]},
+  {l:"Constipation",to:"iox",add:["constipation"]},
+  {l:"Itchy rash or hives after a food, medication, or plant",to:"iox",add:["allergic-mild"]},
+  {l:"One swollen, painful calf or leg",to:"iox",add:["clot"]},
+  {l:"Testicle or groin pain, or a groin bulge",to:"iox",add:["groin"]},
+  {l:"Vaginal bleeding or a pregnancy concern",to:"iox",add:["pregnancy"]},
+  {l:"Fever, aches, or cough after exposure to mouse droppings",to:"iox",add:["hantavirus"]},
+  {l:"Fast breathing with tingling hands during panic",to:"iox",add:["hyperventilation"]},
+  {l:"None, or done",to:"i13"}]},
  i13:{p:"Illness",q:"Severe distress or panic, or any talk of suicide or wanting to die?",yes:{add:["psych"]},no:{}}
 };
 
@@ -1760,12 +2068,12 @@ Object.assign(FIGS, {
 });
 
 (function(){
-const APP_VERSION = "v6", APP_DATE = "Oct 27, 2026";
+const APP_VERSION = "v7", APP_DATE = "Nov 9, 2026";
 document.getElementById("ver").textContent = APP_VERSION + " · " + APP_DATE;
 const BY = {}; CONDS.forEach((c,i)=>{c.i=i; BY[c.id]=c;});
 const RANK = {rapid:3,evac:2,field:1};
 const ULABEL = {rapid:"Rapid evac",evac:"Evacuate",field:"Field care"};
-const CATS = [["assess","Assessment & evacuation"],["life","Life threats"],["trauma","Injuries"],["env","Environment"],["bite","Bites, stings & plants"],["med","Illness"]];
+const CATS = [["assess","Assessment & evacuation"],["life","Life threats"],["trauma","Injuries"],["env","Environment"],["bite","Bites, stings & plants"],["med","Illness"],["ref","Reference"]];
 const CATNAME = Object.fromEntries(CATS);
 const BANNER = {
   rapid:["Rapid evacuation","Call 911 or trigger SOS now. Use the fastest transport available, including helicopter."],
@@ -1776,13 +2084,13 @@ const BANNER = {
 const view = document.getElementById("view");
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const now = () => { const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
-const KEY = "bct-state-v1";
+const KEY = "bct-state-v2", STALE_MS = 6*60*60*1000;
 
 let tab = "assess", libCat = "all", libQ = "";
 let stack;
 function fresh(){ return [{node:"start", adds:[], esc:{}, trail:[], started:now()}]; }
-try { const s = JSON.parse(localStorage.getItem(KEY)); stack = (Array.isArray(s) && s.length) ? s : fresh(); } catch(e){ stack = fresh(); }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(stack)); } catch(e){} };
+try { const s = JSON.parse(localStorage.getItem(KEY)); const ok = s && Array.isArray(s.stack) && s.stack.length && (Date.now()-s.ts) < STALE_MS && s.stack.every(x=>(!x.node||TREE[x.node]) && x.adds.every(a=>BY[a])); stack = ok ? s.stack : fresh(); } catch(e){ stack = fresh(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ts:Date.now(), stack})); } catch(e){} };
 const top = () => stack[stack.length-1];
 
 function eff(id, escMap){
@@ -1828,10 +2136,14 @@ function renderQuestion(){
   }
   h += `</section><div class="navrow"><button class="ghost" id="back" ${stack.length<2?"disabled":""}>Back</button><button class="ghost" id="restart" ${stack.length<2?"disabled":""}>Start over</button></div>`;
   h += trailHTML(st);
+  if (stack.length<2) h += `<div class="homeq"><label for="homeq">Already know the problem?</label><input class="search" id="homeq" type="search" placeholder="Search: broken ankle, bee sting, dose…" autocomplete="off"><div class="jump"><button class="chip rapid" id="go-urgent">Urgent quick cards</button><button class="chip" data-open="evacuation">Calling for help</button><button class="chip" data-open="meds">Medication doses</button></div></div>`;
   if (stack.length<2) h += `<p class="disc">A decision aid for people with wilderness first aid training. It doesn't replace training, judgment, or professional care. If someone's life is at risk, call 911 or use your satellite messenger's SOS.</p>`;
   view.innerHTML = h;
   view.querySelectorAll("[data-yn]").forEach(b=>b.onclick=()=>answer(node[b.dataset.yn], b.dataset.yn==="yes"?"Yes":"No"));
   view.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{ const o=node.opts[+b.dataset.opt]; answer(o, o.l); });
+  const hq = document.getElementById("homeq");
+  if (hq) hq.oninput = e => { libQ = e.target.value; libCat = "all"; setTab("lib"); const n=document.getElementById("q"); n.focus(); try{n.setSelectionRange(libQ.length,libQ.length);}catch(_){} };
+  const gu = document.getElementById("go-urgent"); if (gu) gu.onclick = () => setTab("urgent");
 }
 
 function sec(title, arr, cls, ordered){
@@ -1842,9 +2154,11 @@ function sec(title, arr, cls, ordered){
 function bodyHTML(c, opts){
   const L = Object.assign({sg:"Signs", tx:"Treatment", ev:"Evacuate if", av:"Avoid"}, c.lab||{});
   let h = "";
+  if (c.now) h += `<div class="now ${c.u==="rapid"?"rapid":""}"><h3>Do now</h3><ol>${c.now.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>`;
+  if (c.beat) h += `<button class="beatbtn" data-beat>Start compression beat (110 a minute)</button>`;
   if (opts.signs) h += sec(L.sg, c.sg, "sg", false);
   (c.fig||[]).forEach(f=>{ const F=FIGS[f]; if(F) h += `<figure class="fig"><h4>${esc(F.t)}</h4>${F.svg}<ol>${F.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></figure>`; });
-  h += sec(L.tx, c.tx, "tx", true) + sec(L.ev, c.ev, "ev", false) + sec(L.av, c.av, "av", false);
+  h += sec(L.tx, c.tx, "tx", true) + sec(L.more||"Special situations", c.more, "more", false) + sec(L.ev, c.ev, "ev", false) + sec(L.av, c.av, "av", false);
   return h;
 }
 
@@ -1857,11 +2171,11 @@ function renderResult(){
   const top3 = Math.max(...ids.map(id=>eff(id,st.esc)));
   const key = sceneOnly ? "info" : (lvl(top3) || "field");
   const [bt, bp] = BANNER[key];
-  let h = `<div class="res"><div class="banner ${key}"><div class="k">Disposition · ${esc(now())}</div><h2>${esc(bt)}</h2><p>${esc(bp)}</p></div><div class="cards">`;
+  let h = `<div class="res"><div class="banner ${key}"><div class="k">Disposition · ${esc(now())}</div><h2>${esc(bt)}</h2><p>${esc(bp)}</p>${key==="rapid"||key==="evac"?`<div class="jump"><button class="chip" data-open="evacuation">Calling for help</button><button class="chip" data-open="lz">Signals and helicopter</button><button class="chip" data-open="carry">Moving a patient</button></div>`:""}</div><div class="cards">`;
   ids.forEach((id,idx)=>{
     const c = BY[id], r = eff(id, st.esc), l = lvl(r);
     const raised = c.u && r > RANK[c.u];
-    h += `<details class="card ${l||""}" ${idx<4?"open":""}><summary><h3>${esc(c.n)}</h3>${l?`<span class="pill ${l}">${ULABEL[l]}</span>`:""}</summary><div class="body"><p class="lede">${esc(c.s)}</p>${raised?`<p class="note">Urgency raised because of your answers.</p>`:""}${bodyHTML(c,{signs:false})}<p style="margin:14px 0 0"><button class="link" data-open="${id}">Signs and full details</button></p></div></details>`;
+    h += `<details class="card ${l||""}" ${idx<3?"open":""}><summary><h3>${esc(c.n)}</h3>${l?`<span class="pill ${l}">${ULABEL[l]}</span>`:""}</summary><div class="body"><p class="lede">${esc(c.s)}</p>${raised?`<p class="note">Urgency raised because of your answers.</p>`:""}${bodyHTML(c,{signs:false})}<p style="margin:14px 0 0"><button class="link" data-open="${id}">Signs and full details</button></p></div></details>`;
   });
   h += `</div><div class="navrow"><button class="ghost" id="back">Back</button><button class="ghost" id="restart">New assessment</button><button class="ghost" id="copy">Copy summary</button></div>`;
   h += `<textarea class="copybox" id="copybox" hidden readonly aria-label="Assessment summary"></textarea>`;
@@ -1882,17 +2196,30 @@ function copySummary(ids, st, bt){
 
 function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg; el.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>el.hidden=true,2600); }
 
+const hay = c => c._h || (c._h = [c.n,c.s,c.kw||""].concat(c.now||[],c.sg||[],c.tx||[],c.more||[],c.ev||[],c.av||[]).join(" ").toLowerCase());
+const rank = (c,q) => (c.n.toLowerCase().includes(q)?4:0) + ((c.kw||"").includes(q)?2:0) + (q.split(/\s+/).every(w=>(c.n+" "+(c.kw||"")).toLowerCase().includes(w))?1:0);
+const URGENT = [["cpr","CPR: adult"],["cpr-child","CPR: child"],["cpr-baby","CPR: baby"],["choking","Choking"],["choking-baby","Choking: baby"],["bleeding","Severe bleeding"],["anaphylaxis","Allergic reaction (epinephrine)"],["altered","Unresponsive or confused"],["breathing-unclear","Can't breathe"],["cardiac","Chest pain"],["stroke","Stroke"],["seizure","Seizure"],["heatstroke","Heat stroke"],["hypo-severe","Severe hypothermia"],["drowning","Drowning"],["opioid","Overdose (naloxone)"],["snakebite","Snakebite"],["penetrating","Gunshot or stab wound"],["tbi","Head injury"],["spine","Spine injury"]];
+const HELP = [["evacuation","Calling for help and SOS message"],["lz","Signals and helicopter landing"],["carry","Moving a patient"],["mci","Several patients"],["meds","Medication doses"],["vitals","Vital signs and notes"]];
+function renderUrgent(){
+  let h = `<h2 class="uh">Life threats: tap for steps</h2><div class="ugrid">${URGENT.map(([id,l])=>`<button class="ubtn" data-open="${id}">${esc(l)}</button>`).join("")}</div>`;
+  h += `<button class="beatbtn" data-beat>Start CPR compression beat</button>`;
+  h += `<h2 class="uh">Getting help</h2><div class="ugrid">${HELP.map(([id,l])=>`<button class="ubtn plain" data-open="${id}">${esc(l)}</button>`).join("")}</div>`;
+  view.innerHTML = h;
+}
 function renderLib(){
   const q = libQ.trim().toLowerCase();
-  const list = CONDS.filter(c=>!c.hide && (libCat==="all"||c.c===libCat) && (!q || [c.n,c.s].concat(c.sg||[],c.tx||[]).join(" ").toLowerCase().includes(q)));
-  let h = `<input class="search" id="q" type="search" placeholder="Search: frostbite, rattlesnake, wheezing…" value="${esc(libQ)}" autocomplete="off" aria-label="Search conditions">`;
+  const list = CONDS.filter(c=>!c.hide && (libCat==="all"||c.c===libCat) && (!q || q.split(/\s+/).every(w=>hay(c).includes(w))));
+  if (q) list.sort((a,b)=> rank(b,q)-rank(a,q) || a.i-b.i);
+  let h = `<input class="search" id="q" type="search" placeholder="Search: frostbite, broken wrist, dose…" value="${esc(libQ)}" autocomplete="off" aria-label="Search conditions">`;
   h += `<div class="cats">${[["all","All"]].concat(CATS).map(([k,v])=>`<button data-cat="${k}" aria-pressed="${libCat===k}">${esc(k==="assess"?"Assessment":v)}</button>`).join("")}</div>`;
   if (!list.length) h += `<p class="empty">Nothing matches “${esc(libQ)}”. Try a symptom, like “numb” or “vomiting”.</p>`;
-  CATS.forEach(([k,v])=>{
+  const row = c => `<button class="row" data-open="${c.id}"><b>${esc(c.n)}</b>${c.u?`<span class="pill ${c.u}">${ULABEL[c.u]}</span>`:"<span></span>"}<span class="s">${esc(c.s)}</span></button>`;
+  if (q && list.length) h += `<section class="group"><h2>Matches · ${list.length}</h2><div class="rows">${list.map(row).join("")}</div></section>`;
+  if (!q) CATS.forEach(([k,v])=>{
     const items = list.filter(c=>c.c===k); if(!items.length) return;
     h += `<section class="group"><h2>${esc(v)} · ${items.length}</h2><div class="rows">${items.map(c=>`<button class="row" data-open="${c.id}"><b>${esc(c.n)}</b>${c.u?`<span class="pill ${c.u}">${ULABEL[c.u]}</span>`:"<span></span>"}<span class="s">${esc(c.s)}</span></button>`).join("")}</div></section>`;
   });
-  h += `<p class="disc">Version ${APP_VERSION} · ${APP_DATE}. Urgency shown is the usual starting point. Answers in the assessment can raise it. Aligned with Aerie Backcountry Medicine, Wilderness Medicine 15th ed. Doses refer to the product label or a prescription the person carries.</p>`;
+  h += `<p class="disc">Version ${APP_VERSION} · ${APP_DATE}. Urgency shown is the usual starting point. Answers in the assessment can raise it. Aligned with Aerie Backcountry Medicine, Wilderness Medicine 15th ed. Adult doses for common medications are under Reference; for children, use the product label.</p>`;
   view.innerHTML = h;
   const inp = document.getElementById("q");
   inp.oninput = e => { libQ = e.target.value; const pos = e.target.selectionStart; renderLib(); const n=document.getElementById("q"); n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} };
@@ -1916,6 +2243,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !sheet.hidden) 
 
 document.addEventListener("click", e=>{
   const o = e.target.closest("[data-open]"); if (o){ e.preventDefault(); openSheet(o.dataset.open); return; }
+  if (e.target.closest("[data-beat]")) { startBeat(); return; }
   if (e.target.id==="back" && stack.length>1){ stack.pop(); save(); render(); }
   if (e.target.id==="restart"){ stack = fresh(); save(); render(); window.scrollTo(0,0); }
 });
@@ -1924,13 +2252,37 @@ function setTab(t){
   tab = t;
   document.getElementById("tab-assess").setAttribute("aria-selected", t==="assess");
   document.getElementById("tab-lib").setAttribute("aria-selected", t==="lib");
+  document.getElementById("tab-urgent").setAttribute("aria-selected", t==="urgent");
   render(); window.scrollTo(0,0);
 }
 document.getElementById("tab-assess").onclick = ()=>setTab("assess");
 document.getElementById("tab-lib").onclick = ()=>setTab("lib");
+document.getElementById("tab-urgent").onclick = ()=>setTab("urgent");
+
+/* CPR compression beat: 30 beats at 110 a minute, pause for 2 breaths, repeat */
+let beat = null;
+function startBeat(){
+  if (beat) return;
+  const bar = document.getElementById("beat"), dot = document.getElementById("beat-n"), msg = document.getElementById("beat-msg");
+  let ac = null; try { ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){}
+  let lock = null; try { navigator.wakeLock && navigator.wakeLock.request("screen").then(l=>lock=l).catch(()=>{}); } catch(e){}
+  const click = f => { if(!ac) return; try { const o=ac.createOscillator(), g=ac.createGain(); o.frequency.value=f; g.gain.setValueAtTime(.5,ac.currentTime); g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.09); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+.1); } catch(e){} };
+  let n = 0, cycles = 0; const t0 = Date.now();
+  const step = () => {
+    n++;
+    if (n <= 30) { dot.textContent = n; dot.classList.add("hit"); setTimeout(()=>dot.classList.remove("hit"),120); click(880);
+      msg.innerHTML = `Push hard and fast<small>Cycle ${cycles+1} · ${Math.floor((Date.now()-t0)/60000)} min</small>`; }
+    else { if (n === 31) { click(440); dot.textContent = "2"; msg.innerHTML = "Give 2 breaths<small>Tilt head, 1 second each</small>"; }
+      if (n >= 38) { n = 0; cycles++; } }
+  };
+  bar.hidden = false; step();
+  beat = { id:setInterval(step, 545), stop(){ clearInterval(this.id); bar.hidden = true; try{ lock && lock.release(); }catch(e){} try{ ac && ac.close(); }catch(e){} beat = null; } };
+}
+document.getElementById("beat-stop").onclick = () => beat && beat.stop();
 
 function render(){
   if (tab==="lib") return renderLib();
+  if (tab==="urgent") return renderUrgent();
   if (top().node && TREE[top().node]) renderQuestion(); else renderResult();
 }
 render();
