@@ -2068,7 +2068,7 @@ Object.assign(FIGS, {
 });
 
 (function(){
-const APP_VERSION = "v7", APP_DATE = "Nov 9, 2026";
+const APP_VERSION = "v7.1", APP_DATE = "Nov 9, 2026";
 document.getElementById("ver").textContent = APP_VERSION + " · " + APP_DATE;
 const BY = {}; CONDS.forEach((c,i)=>{c.i=i; BY[c.id]=c;});
 const RANK = {rapid:3,evac:2,field:1};
@@ -2264,9 +2264,23 @@ let beat = null;
 function startBeat(){
   if (beat) return;
   const bar = document.getElementById("beat"), dot = document.getElementById("beat-n"), msg = document.getElementById("beat-msg");
-  let ac = null; try { ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){}
+  /* iOS: Web Audio is muted by the ringer switch and starts suspended. Playing a looping silent <audio>
+     element inside the tap switches the page to the media channel; resume() + a silent buffer unlock the context. */
+  let ac = null, sil = null;
+  try {
+    const sr = 8000, len = sr, buf = new ArrayBuffer(44 + len * 2), v = new DataView(buf);
+    const w = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+    w(0,"RIFF"); v.setUint32(4, 36 + len * 2, true); w(8,"WAVE"); w(12,"fmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+    v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40,len*2,true);
+    sil = new Audio(URL.createObjectURL(new Blob([buf], {type:"audio/wav"}))); sil.loop = true; sil.setAttribute("playsinline",""); sil.play().catch(()=>{});
+  } catch(e){}
+  try {
+    ac = new (window.AudioContext||window.webkitAudioContext)();
+    ac.resume && ac.resume();
+    const b = ac.createBuffer(1,1,22050), src = ac.createBufferSource(); src.buffer = b; src.connect(ac.destination); src.start(0);
+  } catch(e){}
   let lock = null; try { navigator.wakeLock && navigator.wakeLock.request("screen").then(l=>lock=l).catch(()=>{}); } catch(e){}
-  const click = f => { if(!ac) return; try { const o=ac.createOscillator(), g=ac.createGain(); o.frequency.value=f; g.gain.setValueAtTime(.5,ac.currentTime); g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.09); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+.1); } catch(e){} };
+  const click = f => { if(!ac) return; try { if (ac.state !== "running") ac.resume(); const t=ac.currentTime, o=ac.createOscillator(), g=ac.createGain(); o.type="square"; o.frequency.value=f; g.gain.setValueAtTime(.9,t); g.gain.exponentialRampToValueAtTime(.001,t+.12); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+.13); } catch(e){} };
   let n = 0, cycles = 0; const t0 = Date.now();
   const step = () => {
     n++;
@@ -2276,7 +2290,7 @@ function startBeat(){
       if (n >= 38) { n = 0; cycles++; } }
   };
   bar.hidden = false; step();
-  beat = { id:setInterval(step, 545), stop(){ clearInterval(this.id); bar.hidden = true; try{ lock && lock.release(); }catch(e){} try{ ac && ac.close(); }catch(e){} beat = null; } };
+  beat = { id:setInterval(step, 545), stop(){ clearInterval(this.id); bar.hidden = true; try{ lock && lock.release(); }catch(e){} try{ ac && ac.close(); }catch(e){} try{ sil && sil.pause(); }catch(e){} beat = null; } };
 }
 document.getElementById("beat-stop").onclick = () => beat && beat.stop();
 
