@@ -63,6 +63,9 @@ main .gut{padding-block:20px 56px}
 .found{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:14px}
 .found .lbl{font:600 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:2px}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600}
+.k{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:baseline;background:var(--muted)}
+.k.rapid{background:var(--rapid)}.k.evac{background:var(--evac)}.k.field{background:var(--field)}
+.found .key{flex-basis:100%;margin:4px 0 0;font-size:12px;color:var(--muted);line-height:1.5}.found .key span{white-space:nowrap;margin-right:12px;display:inline-block}
 .chip.rapid{border-color:var(--rapid);color:var(--rapid);background:var(--rapid-bg)}
 .chip.evac{border-color:var(--evac);color:var(--evac);background:var(--evac-bg)}
 .chip.field{border-color:var(--field);color:var(--field);background:var(--field-bg)}
@@ -205,7 +208,7 @@ main .gut{padding-block:20px 56px}
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-assess" aria-selected="true">Assess</button>
       <button role="tab" id="tab-urgent" aria-selected="false">Urgent</button>
-      <button role="tab" id="tab-lib" aria-selected="false">Library</button>
+      <button role="tab" id="tab-lib" aria-selected="false">Guide</button>
     </div>
   </div>
 </header>
@@ -2068,7 +2071,7 @@ Object.assign(FIGS, {
 });
 
 (function(){
-const APP_VERSION = "v7.1", APP_DATE = "Nov 9, 2026";
+const APP_VERSION = "v7.2", APP_DATE = "Nov 9, 2026";
 document.getElementById("ver").textContent = APP_VERSION + " · " + APP_DATE;
 const BY = {}; CONDS.forEach((c,i)=>{c.i=i; BY[c.id]=c;});
 const RANK = {rapid:3,evac:2,field:1};
@@ -2110,7 +2113,7 @@ function answer(edge, label){
 }
 
 function chipsHTML(ids, escMap){
-  return ids.map(id=>{ const l=lvl(eff(id,escMap)); return `<button class="chip ${l||""}" data-open="${id}">${esc(BY[id].n)}</button>`; }).join("");
+  return ids.map(id=>{ const l=lvl(eff(id,escMap)); return `<button class="chip ${l||""}" data-open="${id}">${l?`<b class="k ${l}"></b>`:""}${esc(BY[id].n)}</button>`; }).join("");
 }
 
 function trailHTML(st){
@@ -2127,7 +2130,7 @@ function renderQuestion(){
     const c = BY[life[life.length-1]];
     h += `<div class="treatnow"><p>Treat ${esc(c.n.toLowerCase())} now, then keep going.</p><button data-open="${c.id}">Open steps</button></div>`;
   }
-  if (st.adds.length) h += `<div class="found"><span class="lbl">Found so far</span>${chipsHTML(st.adds, st.esc)}</div>`;
+  if (st.adds.length) h += `<div class="found"><span class="lbl">Possible so far</span>${chipsHTML(st.adds, st.esc)}<p class="key"><span><b class="k rapid"></b>Life-threatening, treat first</span><span><b class="k evac"></b>Needs evacuation</span><span><b class="k field"></b>Manage in the field</span></p></div>`;
   h += `<section class="q"><div class="phase"><span>${esc(node.p)}</span><i>Q${n}</i></div><h2 id="qh">${esc(node.q)}</h2>${node.h?`<p class="help">${esc(node.h)}</p>`:""}`;
   if (node.opts){
     h += `<div class="opts">${node.opts.map((o,i)=>`<button class="opt" data-opt="${i}">${esc(o.l)}</button>`).join("")}</div>`;
@@ -2136,7 +2139,6 @@ function renderQuestion(){
   }
   h += `</section><div class="navrow"><button class="ghost" id="back" ${stack.length<2?"disabled":""}>Back</button><button class="ghost" id="restart" ${stack.length<2?"disabled":""}>Start over</button></div>`;
   h += trailHTML(st);
-  if (stack.length<2) h += `<div class="homeq"><label for="homeq">Already know the problem?</label><input class="search" id="homeq" type="search" placeholder="Search: broken ankle, bee sting, dose…" autocomplete="off"><div class="jump"><button class="chip rapid" id="go-urgent">Urgent quick cards</button><button class="chip" data-open="evacuation">Calling for help</button><button class="chip" data-open="meds">Medication doses</button></div></div>`;
   if (stack.length<2) h += `<p class="disc">A decision aid for people with wilderness first aid training. It doesn't replace training, judgment, or professional care. If someone's life is at risk, call 911 or use your satellite messenger's SOS.</p>`;
   view.innerHTML = h;
   view.querySelectorAll("[data-yn]").forEach(b=>b.onclick=()=>answer(node[b.dataset.yn], b.dataset.yn==="yes"?"Yes":"No"));
