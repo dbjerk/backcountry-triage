@@ -6,7 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Triage">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#E9C232">
+<meta name="theme-color" content="#A64A40">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -17,7 +17,7 @@
 :root{
   --bg:#ECEEE9; --surface:#F8F9F6; --ink:#1B211D; --muted:#56615A; --line:#CAD1C9;
   --btn:#1B211D; --on-btn:#F8F9F6;
-  --band:#E9C232; --on-band:#1B211D;
+  --band:#A64A40; --on-band:#FBF3F0;
   --rapid:#B3261E; --rapid-bg:#F7DFDB; --evac:#8F5400; --evac-bg:#F5E6CA; --field:#2D6843; --field-bg:#DBEADF;
   --fig-body:#E8DED1; --fig-pad:#B9D4C2; --fig-heat:#E2761B; --fig-barrier:#9FC0DD; --fig-tarp:#8E9B90;
   --f-display:"Avenir Next Condensed","Roboto Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
@@ -53,9 +53,9 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
 .brand{display:flex;flex-direction:column;line-height:1.05}
 .brand b{font:800 22px/1 var(--f-display);font-stretch:condensed;text-transform:uppercase;letter-spacing:.02em}
 .brand span{font:500 11px/1.4 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;opacity:.75;margin-top:3px}
-.tabs{display:flex;background:rgba(27,33,29,.12);border-radius:10px;padding:3px;gap:3px}
+.tabs{display:flex;background:rgba(0,0,0,.2);border-radius:10px;padding:3px;gap:3px}
 .tabs button{border:0;background:transparent;color:var(--on-band);padding:8px 14px;border-radius:8px;font-weight:600;font-size:15px}
-.tabs button[aria-selected="true"]{background:#1B211D;color:#E9C232}
+.tabs button[aria-selected="true"]{background:#FBF3F0;color:#8A332B}
 
 main .gut{padding-block:20px 56px}
 
@@ -2071,7 +2071,7 @@ Object.assign(FIGS, {
 });
 
 (function(){
-const APP_VERSION = "v7.3", APP_DATE = "Nov 9, 2026";
+const APP_VERSION = "v7.4", APP_DATE = "Nov 9, 2026";
 document.getElementById("ver").textContent = APP_VERSION + " · " + APP_DATE;
 const BY = {}; CONDS.forEach((c,i)=>{c.i=i; BY[c.id]=c;});
 const RANK = {rapid:3,evac:2,field:1};
